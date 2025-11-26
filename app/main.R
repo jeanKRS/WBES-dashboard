@@ -18,7 +18,8 @@ box::use(
   app/view/mod_infrastructure,
   app/view/mod_finance_access,
   app/view/mod_data_quality,
-  app/view/mod_about
+  app/view/mod_about,
+  app/logic/data_loader
 )
 
 #' @export
@@ -46,7 +47,7 @@ ui <- function(id) {
     id = ns("main_navbar"),
     title = tags$span(
       tags$img(
-        src = "static/images/logo.png",
+        src = "static/images/logo.svg",
         height = "35px",
         style = "margin-right: 10px; vertical-align: middle;"
       ),
@@ -59,7 +60,7 @@ ui <- function(id) {
     
     # Header with branding
     header = tags$head(
-      tags$link(rel = "icon", type = "image/png", href = "static/images/favicon.png"),
+      tags$link(rel = "icon", type = "image/svg+xml", href = "static/images/favicon.svg"),
       tags$meta(name = "description", content = "World Bank Enterprise Surveys Dashboard"),
       tags$meta(name = "author", content = "Kwiz Computing Technologies"),
       useWaiter()
@@ -183,7 +184,7 @@ server <- function(id) {
     # Initialize data loading
     shiny::observe({
       # Load and cache data
-      data <- app$logic$data_loader$load_wbes_data()
+      data <- data_loader$load_wbes_data()
       wbes_data(data)
       waiter::waiter_hide()
     })
