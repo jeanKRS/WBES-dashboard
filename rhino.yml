@@ -1,0 +1,23 @@
+# World Bank Enterprise Surveys - Business Environment Benchmarking Dashboard
+# Rhino Framework Configuration
+# Theme: kwizresearch.com (Teal: #1B6B5F, Coral: #F49B7A)
+
+rhino: 1.9.0
+
+# Sass configuration using kwizresearch.com theme
+sass: node
+
+# JavaScript bundling
+js: none
+
+# Linting
+linters:
+  - lintr
+  - styler
+
+# Test configuration
+test:
+  framework: testthat
+
+# Legacy mode disabled for cleaner architecture
+legacy: false
