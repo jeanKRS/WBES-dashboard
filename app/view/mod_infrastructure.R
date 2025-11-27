@@ -288,6 +288,7 @@ server <- function(id, wbes_data) {
               ),
               hovertemplate = "%{text}<br>Outages: %{x:.1f}<br>Capacity: %{y:.1f}%<extra></extra>") |>
         add_trace(
+          inherit = FALSE,
           x = base::c(0, base::max(data$power_outages_per_month, na.rm = TRUE)),
           y = predict(lm(capacity_utilization_pct ~ power_outages_per_month, data = data),
                       newdata = base::data.frame(power_outages_per_month = base::c(0, base::max(data$power_outages_per_month, na.rm = TRUE)))),
