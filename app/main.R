@@ -193,8 +193,9 @@ server <- function(input, output, session) {
   # Show loading spinner
   waiter_show(
     html = tags$div(
-      spin_fading_circles(color = "#1B6B5F"),
-      tags$h4("Loading WBES Data...", class = "mt-3 text-primary-teal")
+      style = "color: #1B6B5F;",
+      spin_fading_circles(),
+      tags$h4("Loading WBES Data...", class = "mt-3", style = "color: #1B6B5F;")
     ),
     color = "#ffffff"
   )
