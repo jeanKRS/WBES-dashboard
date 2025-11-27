@@ -253,8 +253,7 @@ server <- function(id, wbes_data) {
           region = base::c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
                      "Latin America", "Europe & Central Asia"),
           firms_with_bank_account_pct = base::c(82, 85, 92, 94, 96),
-          firms_with_credit_line_pct = base::c(22, 28, 35, 42, 48),
-          loan = base::c(18, 22, 28, 35, 40)
+          firms_with_credit_line_pct = base::c(22, 28, 35, 42, 48)
         )
       }
 
@@ -263,8 +262,6 @@ server <- function(id, wbes_data) {
                   type = "bar", marker = list(color = "#1B6B5F")) |>
         add_trace(x = ~region, y = ~firms_with_credit_line_pct, name = "Credit Line",
                   type = "bar", marker = list(color = "#F49B7A")) |>
-        add_trace(x = ~region, y = ~loan, name = "Bank Loan",
-                  type = "bar", marker = list(color = "#6C757D")) |>
         layout(
           barmode = "group",
           xaxis = list(title = "", tickangle = -30),
