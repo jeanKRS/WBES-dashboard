@@ -133,13 +133,13 @@ server <- function(id, wbes_data) {
     # Update filters
     observeEvent(wbes_data(), {
       req(wbes_data())
-      regions <- unique(wbes_data()$latest$region)
+      regions <- base::unique(wbes_data()$latest$region)
       shiny::updateSelectInput(session, "region_filter",
-        choices = c("All Regions" = "all", setNames(regions, regions)))
-      
+        choices = base::c("All Regions" = "all", setNames(regions, regions)))
+
       years <- wbes_data()$years
       shiny::updateSelectInput(session, "year_filter",
-        choices = setNames(years, years), selected = max(years))
+        choices = setNames(years, years), selected = base::max(years))
     })
     
     # Filtered data
@@ -155,27 +155,27 @@ server <- function(id, wbes_data) {
     # KPIs
     output$kpi_outages <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$power_outages_per_month, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$power_outages_per_month, na.rm = TRUE), 1)
       tags$div(class = "kpi-box",
         tags$div(class = "kpi-value", avg),
         tags$div(class = "kpi-label", "Avg Outages/Month")
       )
     })
-    
+
     output$kpi_duration <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$avg_outage_duration_hrs, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$avg_outage_duration_hrs, na.rm = TRUE), 1)
       tags$div(class = "kpi-box kpi-box-coral",
-        tags$div(class = "kpi-value", paste0(avg, "h")),
+        tags$div(class = "kpi-value", base::paste0(avg, "h")),
         tags$div(class = "kpi-label", "Avg Duration")
       )
     })
-    
+
     output$kpi_generator <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$firms_with_generator_pct, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$firms_with_generator_pct, na.rm = TRUE), 1)
       tags$div(class = "kpi-box kpi-box-warning",
-        tags$div(class = "kpi-value", paste0(avg, "%")),
+        tags$div(class = "kpi-value", base::paste0(avg, "%")),
         tags$div(class = "kpi-label", "Own Generator")
       )
     })
@@ -192,9 +192,9 @@ server <- function(id, wbes_data) {
       req(filtered_data())
       data <- filtered_data()
       indicator <- input$infra_indicator
-      
+
       data <- arrange(data, desc(.data[[indicator]]))[1:15, ]
-      data$country <- factor(data$country, levels = rev(data$country))
+      data$country <- base::factor(data$country, levels = base::rev(data$country))
       
       plot_ly(data,
               y = ~country,
@@ -206,7 +206,7 @@ server <- function(id, wbes_data) {
                 colorscale = list(c(0, "#2E7D32"), c(0.5, "#F4A460"), c(1, "#dc3545"))
               )) |>
         layout(
-          xaxis = list(title = gsub("_", " ", tools::toTitleCase(indicator))),
+          xaxis = list(title = base::gsub("_", " ", tools::toTitleCase(indicator))),
           yaxis = list(title = ""),
           margin = list(l = 120),
           paper_bgcolor = "rgba(0,0,0,0)"
@@ -249,9 +249,9 @@ server <- function(id, wbes_data) {
               ),
               hovertemplate = "%{text}<br>Outages: %{x:.1f}<br>Capacity: %{y:.1f}%<extra></extra>") |>
         add_trace(
-          x = c(0, max(data$power_outages_per_month, na.rm = TRUE)),
+          x = base::c(0, base::max(data$power_outages_per_month, na.rm = TRUE)),
           y = predict(lm(capacity_utilization_pct ~ power_outages_per_month, data = data),
-                      newdata = data.frame(power_outages_per_month = c(0, max(data$power_outages_per_month, na.rm = TRUE)))),
+                      newdata = base::data.frame(power_outages_per_month = base::c(0, base::max(data$power_outages_per_month, na.rm = TRUE)))),
           type = "scatter",
           mode = "lines",
           line = list(color = "#6C757D", dash = "dash"),
@@ -268,13 +268,13 @@ server <- function(id, wbes_data) {
     
     # Cost chart
     output$cost_chart <- renderPlotly({
-      costs <- data.frame(
-        category = c("Generator Fuel", "Lost Production", "Equipment Damage", 
+      costs <- base::data.frame(
+        category = base::c("Generator Fuel", "Lost Production", "Equipment Damage",
                      "Backup Systems", "Water Trucking"),
-        pct = c(2.8, 4.2, 1.5, 1.2, 0.8)
+        pct = base::c(2.8, 4.2, 1.5, 1.2, 0.8)
       )
       costs <- arrange(costs, pct)
-      costs$category <- factor(costs$category, levels = costs$category)
+      costs$category <- base::factor(costs$category, levels = costs$category)
       
       plot_ly(costs,
               y = ~category,
@@ -293,13 +293,13 @@ server <- function(id, wbes_data) {
     
     # Heatmap
     output$infra_heatmap <- renderPlotly({
-      regions <- c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
+      regions <- base::c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
                    "Latin America", "Europe & Central Asia")
-      indicators <- c("Power Outages", "Outage Duration", "Generator Use", 
+      indicators <- base::c("Power Outages", "Outage Duration", "Generator Use",
                       "Water Issues", "Transport")
-      
-      z <- matrix(
-        c(8.5, 5.2, 45, 25, 18,
+
+      z <- base::matrix(
+        base::c(8.5, 5.2, 45, 25, 18,
           6.2, 4.1, 35, 20, 15,
           3.1, 2.5, 20, 12, 10,
           4.2, 3.2, 28, 18, 12,
