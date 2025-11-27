@@ -7,6 +7,11 @@ box::use(
   ./benchmark,
   ./infrastructure,
   ./finance_access,
+  ./corruption,
+  ./workforce,
+  ./performance,
+  ./crime,
+  ./custom_analysis,
   ./data_quality,
   ./about
 )
