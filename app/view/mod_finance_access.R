@@ -247,21 +247,21 @@ server <- function(id, wbes_data) {
     output$finance_by_region <- renderPlotly({
       req(wbes_data())
       regional <- wbes_data()$regional
-      
+
       if (base::is.null(regional)) {
         regional <- base::data.frame(
           region = base::c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
                      "Latin America", "Europe & Central Asia"),
-          bank_account = base::c(82, 85, 92, 94, 96),
-          credit_line = base::c(22, 28, 35, 42, 48),
+          firms_with_bank_account_pct = base::c(82, 85, 92, 94, 96),
+          firms_with_credit_line_pct = base::c(22, 28, 35, 42, 48),
           loan = base::c(18, 22, 28, 35, 40)
         )
       }
-      
+
       plot_ly(regional) |>
-        add_trace(x = ~region, y = ~bank_account, name = "Bank Account",
+        add_trace(x = ~region, y = ~firms_with_bank_account_pct, name = "Bank Account",
                   type = "bar", marker = list(color = "#1B6B5F")) |>
-        add_trace(x = ~region, y = ~credit_line, name = "Credit Line",
+        add_trace(x = ~region, y = ~firms_with_credit_line_pct, name = "Credit Line",
                   type = "bar", marker = list(color = "#F49B7A")) |>
         add_trace(x = ~region, y = ~loan, name = "Bank Loan",
                   type = "bar", marker = list(color = "#6C757D")) |>
