@@ -14,7 +14,8 @@ box::use(
           facet_wrap, scale_fill_manual, scale_color_manual],
   tidyr[pivot_longer],
   DT[dataTableOutput, renderDataTable, datatable],
-  stats[setNames]
+  stats[setNames],
+  utils[head]
 )
 
 #' @export
