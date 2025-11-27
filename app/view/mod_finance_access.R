@@ -2,6 +2,7 @@
 # Access to Finance Analysis Module
 
 box::use(
+  stats[setNames],
   shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body],

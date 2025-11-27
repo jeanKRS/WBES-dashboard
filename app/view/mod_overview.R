@@ -2,6 +2,7 @@
 # Dashboard Overview Module
 
 box::use(
+ stats[setNames],
  shiny[moduleServer, NS, reactive, req, tags, HTML, icon, div, h2, h3, h4, p, span, br,
         fluidRow, column, selectInput, sliderInput, actionButton, observeEvent, renderUI, uiOutput],
  bslib[card, card_header, card_body, value_box, layout_columns],

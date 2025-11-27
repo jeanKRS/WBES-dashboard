@@ -2,6 +2,7 @@
 # Country Profile Deep Dive Module
 
 box::use(
+  stats[setNames],
   shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, h4, p, span,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent, renderText, textOutput],
   bslib[card, card_header, card_body, navset_card_tab, nav_panel],

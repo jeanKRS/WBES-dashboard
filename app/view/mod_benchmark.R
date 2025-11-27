@@ -2,8 +2,9 @@
 # Cross-Country Benchmarking Module
 
 box::use(
+  stats[setNames],
   shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p,
-        fluidRow, column, selectInput, selectizeInput, renderUI, uiOutput, 
+        fluidRow, column, selectInput, selectizeInput, renderUI, uiOutput,
         observeEvent, actionButton],
   bslib[card, card_header, card_body],
   plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config, subplot],
