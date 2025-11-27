@@ -73,23 +73,53 @@ ui <- function(id) {
       column(8,
         card(
           card_header(icon("map-marked-alt"), " Business Environment Map"),
-          card_body(leafletOutput(ns("world_map"), height = "450px"))
+          card_body(
+            leafletOutput(ns("world_map"), height = "450px"),
+            tags$div(
+              class = "mt-3 p-2 bg-light border-start border-4 border-info",
+              tags$p(
+                class = "mb-0 small text-muted",
+                tags$strong("Interpretation: "),
+                "This interactive map displays the geographic distribution of surveyed countries. Circle size represents the composite severity of business obstacles - larger circles indicate countries where firms report higher levels of constraints. Use this to identify regional patterns and compare business climates across geographic areas."
+              )
+            )
+          )
         )
       ),
       column(4,
         card(
           card_header(icon("exclamation-triangle"), " Top Business Obstacles"),
-          card_body(plotlyOutput(ns("obstacles_chart"), height = "450px"))
+          card_body(
+            plotlyOutput(ns("obstacles_chart"), height = "450px"),
+            tags$div(
+              class = "mt-3 p-2 bg-light border-start border-4 border-warning",
+              tags$p(
+                class = "mb-0 small text-muted",
+                tags$strong("Interpretation: "),
+                "This chart ranks the most critical business constraints. Percentages show the proportion of firms identifying each factor as a major obstacle. Common top obstacles include electricity/infrastructure, access to finance, and corruption."
+              )
+            )
+          )
         )
       )
     ),
-    
+
     # Regional Comparison
     fluidRow(
       column(12,
         card(
           card_header(icon("chart-bar"), " Regional Comparison"),
-          card_body(plotlyOutput(ns("regional_chart"), height = "350px"))
+          card_body(
+            plotlyOutput(ns("regional_chart"), height = "350px"),
+            tags$div(
+              class = "mt-3 p-2 bg-light border-start border-4 border-success",
+              tags$p(
+                class = "mb-0 small text-muted",
+                tags$strong("Interpretation: "),
+                "This grouped bar chart compares obstacle severity across regions. Each colored bar represents a different type of constraint. Sub-Saharan Africa and South Asia typically face the most severe infrastructure and power challenges, while all regions struggle with finance access to varying degrees."
+              )
+            )
+          )
         )
       )
     )
