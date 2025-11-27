@@ -2,7 +2,7 @@
 # Access to Finance Analysis Module
 
 box::use(
-  stats[setNames],
+  stats[setNames, runif],
   shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body],
@@ -160,7 +160,7 @@ server <- function(id, wbes_data) {
     # KPIs
     output$kpi_bank_account <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$firms_with_bank_account_pct, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$firms_with_bank_account_pct, na.rm = TRUE), 1)
       tags$div(class = "kpi-box",
         tags$div(class = "kpi-value", paste0(avg, "%")),
         tags$div(class = "kpi-label", "Bank Account")
@@ -169,7 +169,7 @@ server <- function(id, wbes_data) {
     
     output$kpi_credit_line <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$firms_with_credit_line_pct, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$firms_with_credit_line_pct, na.rm = TRUE), 1)
       tags$div(class = "kpi-box kpi-box-coral",
         tags$div(class = "kpi-value", paste0(avg, "%")),
         tags$div(class = "kpi-label", "Credit Access")
@@ -178,7 +178,7 @@ server <- function(id, wbes_data) {
     
     output$kpi_collateral <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$collateral_required_pct, na.rm = TRUE), 0)
+      avg <- base::round(base::mean(filtered_data()$collateral_required_pct, na.rm = TRUE), 0)
       tags$div(class = "kpi-box kpi-box-warning",
         tags$div(class = "kpi-value", paste0(avg, "%")),
         tags$div(class = "kpi-label", "Collateral Required")
@@ -187,7 +187,7 @@ server <- function(id, wbes_data) {
     
     output$kpi_rejection <- renderUI({
       req(filtered_data())
-      avg <- round(mean(filtered_data()$loan_rejection_rate_pct, na.rm = TRUE), 1)
+      avg <- base::round(base::mean(filtered_data()$loan_rejection_rate_pct, na.rm = TRUE), 1)
       tags$div(class = "kpi-box kpi-box-success",
         tags$div(class = "kpi-value", paste0(avg, "%")),
         tags$div(class = "kpi-label", "Rejection Rate")
@@ -199,13 +199,13 @@ server <- function(id, wbes_data) {
       req(wbes_data())
       regional <- wbes_data()$regional
       
-      if (is.null(regional)) {
-        regional <- data.frame(
-          region = c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
+      if (base::is.null(regional)) {
+        regional <- base::data.frame(
+          region = base::c("Sub-Saharan Africa", "South Asia", "East Asia & Pacific",
                      "Latin America", "Europe & Central Asia"),
-          bank_account = c(82, 85, 92, 94, 96),
-          credit_line = c(22, 28, 35, 42, 48),
-          loan = c(18, 22, 28, 35, 40)
+          bank_account = base::c(82, 85, 92, 94, 96),
+          credit_line = base::c(22, 28, 35, 42, 48),
+          loan = base::c(18, 22, 28, 35, 40)
         )
       }
       
@@ -258,7 +258,7 @@ server <- function(id, wbes_data) {
       data$country <- factor(data$country, levels = rev(data$country))
       
       # Simulated gap data
-      data$need <- data$firms_with_credit_line_pct + runif(nrow(data), 20, 40)
+      data$need <- data$firms_with_credit_line_pct + runif(base::nrow(data), 20, 40)
       data$gap <- data$need - data$firms_with_credit_line_pct
       
       plot_ly(data) |>
