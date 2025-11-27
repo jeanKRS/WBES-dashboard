@@ -3,7 +3,7 @@
 
 box::use(
   stats[setNames],
-  shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p,
+  shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p, HTML,
         fluidRow, column, selectInput, selectizeInput, renderUI, uiOutput,
         observeEvent, actionButton],
   bslib[card, card_header, card_body],

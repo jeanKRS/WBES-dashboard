@@ -3,7 +3,7 @@
 
 box::use(
   stats[setNames, predict, lm],
-  shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p,
+  shiny[moduleServer, NS, reactive, req, tags, icon, div, h2, h3, p, HTML,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body, navset_card_tab, nav_panel],
   plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, add_annotations, config],
