@@ -5,7 +5,7 @@ box::use(
   shiny[moduleServer, NS, reactive, req, tags, div, icon, h2, h4, p,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body, navset_card_tab, nav_panel],
-  plotly[plotlyOutput, renderPlotly, plot_ly, layout, config],
+  plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config],
   dplyr[filter, arrange, mutate],
   stats[setNames]
 )
