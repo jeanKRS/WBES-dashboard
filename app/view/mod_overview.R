@@ -35,10 +35,14 @@ ui <- function(id) {
          ),
          tags$div(
            class = "alert alert-info mt-3",
-           style = "background-color: #e8f4f3; border-color: #1B6B5F;",
-           tags$strong(icon("info-circle"), " What you'll see here:"),
+           style = "background-color: #e8f4f3; border-color: #1B6B5F; color: #0d4a42;",
+           tags$strong(
+             style = "color: #1B6B5F;",
+             icon("info-circle"), " What you'll see here:"
+           ),
            tags$ul(
              class = "mb-0 mt-2",
+             style = "color: #0d4a42;",
              tags$li("Key metrics showing the breadth and depth of the survey coverage"),
              tags$li("Interactive map displaying business environment indicators by country"),
              tags$li("Regional comparisons highlighting variations across geographic areas"),
@@ -46,6 +50,7 @@ ui <- function(id) {
            ),
            tags$p(
              class = "mb-0 mt-2",
+             style = "color: #0d4a42;",
              tags$em("💡 Tip: Use the filters below to focus on specific regions, income groups, or time periods.")
            )
          )
