@@ -2,7 +2,7 @@
 # Data Loading and Processing Module for WBES Dashboard
 
 box::use(
-
+  stats[runif, aggregate, setNames],
   haven[read_dta],
   dplyr[...],
   tidyr[pivot_longer, pivot_wider, drop_na],
@@ -11,6 +11,32 @@ box::use(
   purrr[map_dfr],
   logger[log_info, log_warn, log_error]
 )
+
+# Base R functions needed for data generation
+set.seed <- base::set.seed
+round <- base::round
+rep <- base::rep
+data.frame <- base::data.frame
+nrow <- base::nrow
+ncol <- base::ncol
+ifelse <- base::ifelse
+list <- base::list
+sum <- base::sum
+is.null <- base::is.null
+sapply <- base::sapply
+complete.cases <- base::complete.cases
+prod <- base::prod
+dim <- base::dim
+Sys.Date <- base::Sys.Date
+length <- base::length
+basename <- base::basename
+lapply <- base::lapply
+names <- base::names
+c <- base::c
+paste <- base::paste
+max <- base::max
+mean <- base::mean
+unique <- base::unique
 
 #' Load WBES Data from Stata files
 #' @param data_path Path to data directory
