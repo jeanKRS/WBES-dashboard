@@ -19,19 +19,35 @@ ui <- function(id) {
  tags$div(
    class = "overview-container",
    
-   # Header Section
+   # Header Section with Contextual Introduction
    fluidRow(
      column(12,
        tags$div(
          class = "page-header mb-4",
          h2(
-           icon("globe"), 
+           icon("globe"),
            "Global Business Environment Overview",
            class = "text-primary-teal"
          ),
          p(
            class = "lead text-muted",
            "Comprehensive benchmarking of business environments across 168 economies using World Bank Enterprise Survey data"
+         ),
+         tags$div(
+           class = "alert alert-info mt-3",
+           style = "background-color: #e8f4f3; border-color: #1B6B5F;",
+           tags$strong(icon("info-circle"), " What you'll see here:"),
+           tags$ul(
+             class = "mb-0 mt-2",
+             tags$li("Key metrics showing the breadth and depth of the survey coverage"),
+             tags$li("Interactive map displaying business environment indicators by country"),
+             tags$li("Regional comparisons highlighting variations across geographic areas"),
+             tags$li("Trend analysis showing how business conditions evolve over time")
+           ),
+           tags$p(
+             class = "mb-0 mt-2",
+             tags$em("💡 Tip: Use the filters below to focus on specific regions, income groups, or time periods.")
+           )
          )
        )
      )
