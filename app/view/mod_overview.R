@@ -67,7 +67,7 @@ ui <- function(id) {
      column(3, uiOutput(ns("kpi_indicators")))
    ),
    
-   # Filters Row
+   # Filters Row with Independent Scrolling
    fluidRow(
      class = "mb-4",
      column(12,
@@ -75,8 +75,19 @@ ui <- function(id) {
          card_header(icon("filter"), "Filters", class = "py-2"),
          card_body(
            class = "py-3",
+           tags$style(HTML("
+             .filter-column {
+               position: relative;
+               padding: 0 10px;
+             }
+             .filter-column .selectize-dropdown {
+               position: absolute !important;
+               z-index: 1000;
+             }
+           ")),
            fluidRow(
              column(3,
+               class = "filter-column",
                selectInput(
                  ns("region_filter"),
                  "Region",
@@ -85,6 +96,7 @@ ui <- function(id) {
                )
              ),
              column(3,
+               class = "filter-column",
                selectInput(
                  ns("income_filter"),
                  "Income Group",
@@ -93,6 +105,7 @@ ui <- function(id) {
                )
              ),
              column(3,
+               class = "filter-column",
                selectInput(
                  ns("year_filter"),
                  "Survey Year",
