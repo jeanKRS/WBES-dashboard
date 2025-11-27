@@ -1,0 +1,42 @@
+# config.yml
+# Application configuration for WBES Dashboard
+# Uses the config package: https://github.com/rstudio/config
+
+default:
+  # Application metadata
+  app_name: "WBES Business Environment Dashboard"
+  app_version: "2.0.0"
+  app_description: "World Bank Enterprise Surveys - Comprehensive Business Environment Analysis"
+
+  # Data settings
+  data_cache_hours: 24
+  use_sample_data: false
+  data_path: "data/"
+
+  # API settings
+  wb_api_base: "https://api.worldbank.org/v2"
+  es_source_id: 13
+  api_timeout: 30
+
+  # UI settings
+  theme_primary: "#1B6B5F"
+  theme_secondary: "#F49B7A"
+
+  # Logging
+  log_level: "INFO"
+
+  # Analysis defaults
+  default_year_range:
+    min: 2019
+    max: 2024
+
+  max_countries_display: 20
+
+development:
+  log_level: "DEBUG"
+  use_sample_data: true
+
+production:
+  log_level: "WARN"
+  use_sample_data: false
+  data_cache_hours: 48
