@@ -2,6 +2,7 @@
 # Logic module exports
 
 box::use(
+<<<<<<< HEAD
   ./wbes_data[
     load_wbes_data,
     load_sample_data,
@@ -11,3 +12,10 @@ box::use(
     WBES_INDICATORS
   ]
 )
+=======
+  ./data_loader
+)
+
+#' @export
+data_loader
+>>>>>>> origin/main
