@@ -2,7 +2,7 @@
 # Corruption & Governance Analysis Module
 
 box::use(
-  shiny[moduleServer, NS, reactive, req, tags, div, icon, h2, h3, p,
+  shiny[moduleServer, NS, reactive, req, tags, div, icon, h2, h3, p, strong,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent,
         renderText, textOutput],
   bslib[card, card_header, card_body, value_box],
