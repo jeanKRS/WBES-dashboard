@@ -80,7 +80,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This interactive map displays the geographic distribution of surveyed countries. Circle size represents the composite severity of business obstacles - larger circles indicate countries where firms report higher levels of constraints. Use this to identify regional patterns and compare business climates across geographic areas."
+                "This interactive map displays the geographic distribution of surveyed countries. Circle size represents the composite severity of business obstacles based on reported constraint levels. Use this to identify regional patterns and compare business climates across geographic areas."
               )
             )
           )
@@ -96,7 +96,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This chart ranks the most critical business constraints. Percentages show the proportion of firms identifying each factor as a major obstacle. Common top obstacles include electricity/infrastructure, access to finance, and corruption."
+                "This chart ranks business constraints by the proportion of firms identifying each factor as a major obstacle. Percentages show the relative frequency of each reported constraint across the surveyed firms."
               )
             )
           )
@@ -116,7 +116,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This grouped bar chart compares obstacle severity across regions. Each colored bar represents a different type of constraint. Sub-Saharan Africa and South Asia typically face the most severe infrastructure and power challenges, while all regions struggle with finance access to varying degrees."
+                "This grouped bar chart compares obstacle severity across regions. Each colored bar represents a different type of constraint, allowing you to observe patterns in how different regions experience various business challenges."
               )
             )
           )

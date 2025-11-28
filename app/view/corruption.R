@@ -100,7 +100,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This scatter plot reveals the negative relationship between corruption and capacity utilization. Countries with higher corruption (right side) tend to have lower capacity utilization, indicating that governance issues directly impact firm productivity."
+                "This scatter plot shows the relationship between corruption perception and capacity utilization across countries. The trend line indicates the direction and strength of correlation observed in the data. Each point represents a country's position on both metrics."
               )
             )
           )
@@ -116,7 +116,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This chart shows how corruption and finance access obstacles tend to co-occur. Countries with high corruption often also face challenges in accessing finance, suggesting broader institutional weaknesses. Each point represents a country, colored by region."
+                "This chart displays the relationship between corruption and finance access obstacles across countries. The trend line shows the observed correlation in the data. Points are colored by region to reveal geographic patterns in governance and financial access."
               )
             )
           )
@@ -137,7 +137,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "Box plots show the distribution of corruption perception across income groups. The median line, box (25th-75th percentile), and whiskers reveal that lower-income countries tend to report higher and more variable corruption levels."
+                "Box plots show the distribution of corruption perception across income groups. The median line, box (25th-75th percentile), and whiskers display the spread and central tendency of corruption levels within each income category."
               )
             )
           )
@@ -153,7 +153,7 @@ ui <- function(id) {
               tags$p(
                 class = "mb-0 small text-muted",
                 tags$strong("Interpretation: "),
-                "This scatter plot compares bribery incidence (x-axis) with corruption perception (y-axis). Points in the upper-right quadrant face both high bribery frequency and high corruption perception, indicating systemic governance challenges."
+                "This scatter plot compares bribery incidence (x-axis) with corruption perception (y-axis). The trend line shows the observed correlation between these two governance metrics across countries. Points in different quadrants represent varying combinations of bribery frequency and corruption levels."
               )
             )
           )
