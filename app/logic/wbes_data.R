@@ -119,36 +119,68 @@ WBES_INDICATORS <- list(
 
 #' Load complete WBES dataset
 #' This function attempts to load data in order of preference:
-#' 1. Local microdata (.dta files) if present
-#' 2. Cached API data if available
-#' 3. Fresh API data
-#' 4. Sample data as fallback
+#' 1. Cached processed data (.rds) if present and recent
+#' 2. Local microdata from assets.zip if present
+#' 3. Individual .dta files if present
+#' 4. Fresh API data
+#' 5. Sample data as fallback
 #' @param data_path Path to data directory
 #' @param use_cache Whether to use cached data
 #' @param cache_hours Hours before cache expires
 #' @return List with WBES data components
 #' @export
 load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 24) {
-  
+
   log_info("Loading WBES data...")
-  
-  # Check for local microdata first
-  dta_files <- list.files(data_path, pattern = "\\.dta$", full.names = TRUE)
-  if (length(dta_files) > 0) {
-    log_info("Found local microdata files")
-    return(load_microdata(dta_files))
-  }
-  
-  # Check for cached API data
-  cache_file <- file.path(data_path, "wbes_cache.rds")
+
+  # Check for cached processed data first (fastest)
+  cache_file <- file.path(data_path, "wbes_processed.rds")
   if (use_cache && file.exists(cache_file)) {
     cache_age <- difftime(Sys.time(), file.mtime(cache_file), units = "hours")
     if (cache_age < cache_hours) {
-      log_info("Loading from cache")
+      log_info("Loading from cache (processed data)")
       return(readRDS(cache_file))
     }
   }
-  
+
+  # Check for assets.zip (combined microdata)
+  assets_zip <- file.path(data_path, "assets.zip")
+  if (file.exists(assets_zip)) {
+    log_info("Found assets.zip - loading combined microdata")
+    result <- load_from_zip(assets_zip, data_path)
+
+    # Cache the processed result
+    if (use_cache && !is.null(result)) {
+      tryCatch({
+        saveRDS(result, cache_file)
+        log_info("Cached processed data for faster future loads")
+      }, error = function(e) {
+        log_warn(paste("Could not cache data:", e$message))
+      })
+    }
+
+    return(result)
+  }
+
+  # Check for individual .dta files
+  dta_files <- list.files(data_path, pattern = "\\.dta$", full.names = TRUE)
+  if (length(dta_files) > 0) {
+    log_info("Found local .dta files")
+    result <- load_microdata(dta_files)
+
+    # Cache the processed result
+    if (use_cache && !is.null(result)) {
+      tryCatch({
+        saveRDS(result, cache_file)
+        log_info("Cached processed data")
+      }, error = function(e) {
+        log_warn(paste("Could not cache data:", e$message))
+      })
+    }
+
+    return(result)
+  }
+
   # Try to fetch from API
   api_data <- fetch_all_indicators()
   if (!is.null(api_data)) {
@@ -162,9 +194,9 @@ load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 
     })
     return(api_data)
   }
-  
+
   # Fallback to sample data
-  log_warn("Using sample data")
+  log_warn("No data sources found - using sample data")
   return(load_sample_data())
 }
 
@@ -269,46 +301,263 @@ add_country_metadata <- function(data) {
   })
 }
 
+#' Load microdata from ZIP archive
+#' Efficiently extracts and loads .dta file from assets.zip
+#' @param zip_file Path to assets.zip file
+#' @param data_path Directory to extract to (temporary)
+#' @return Processed data list
+load_from_zip <- function(zip_file, data_path) {
+
+  log_info(paste("Extracting microdata from:", basename(zip_file)))
+
+  # Create temp extraction directory
+  extract_dir <- file.path(data_path, ".extracted")
+  dir.create(extract_dir, showWarnings = FALSE, recursive = TRUE)
+
+  tryCatch({
+    # List contents of zip
+    zip_contents <- unzip(zip_file, list = TRUE)
+    dta_files_in_zip <- zip_contents$Name[grepl("\\.dta$", zip_contents$Name, ignore.case = TRUE)]
+
+    if (length(dta_files_in_zip) == 0) {
+      log_error("No .dta files found in assets.zip")
+      return(load_sample_data())
+    }
+
+    log_info(paste("Found", length(dta_files_in_zip), ".dta file(s) in archive"))
+
+    # Extract only .dta files
+    unzip(zip_file, files = dta_files_in_zip, exdir = extract_dir, overwrite = TRUE)
+
+    # Get full paths to extracted files
+    extracted_files <- file.path(extract_dir, dta_files_in_zip)
+
+    # Load the microdata
+    result <- load_microdata(extracted_files)
+
+    # Cleanup extraction directory (optional - keep for faster subsequent loads)
+    # unlink(extract_dir, recursive = TRUE)
+
+    log_info("Successfully loaded microdata from assets.zip")
+    return(result)
+
+  }, error = function(e) {
+    log_error(paste("Error extracting/loading from zip:", e$message))
+    # Cleanup on error
+    unlink(extract_dir, recursive = TRUE)
+    return(load_sample_data())
+  })
+}
+
 #' Load microdata from Stata files
 #' @param dta_files Vector of .dta file paths
 #' @return Processed data list
 load_microdata <- function(dta_files) {
-  
-  log_info(paste("Loading", length(dta_files), "microdata files"))
-  
+
+  log_info(paste("Loading", length(dta_files), "microdata file(s)"))
+
+  # Load all files
   data_list <- lapply(dta_files, function(f) {
     tryCatch({
-      log_info(paste("Reading:", basename(f)))
-      read_dta(f)
+      file_size_mb <- file.size(f) / 1024^2
+      log_info(sprintf("Reading: %s (%.1f MB)", basename(f), file_size_mb))
+
+      # Read with progress for large files
+      data <- read_dta(f)
+
+      log_info(sprintf("Loaded %s with %d observations and %d variables",
+                      basename(f), nrow(data), ncol(data)))
+      data
+
     }, error = function(e) {
-      log_error(paste("Error reading", f, ":", e$message))
+      log_error(paste("Error reading", basename(f), ":", e$message))
       NULL
     })
   })
-  
+
   names(data_list) <- tools::file_path_sans_ext(basename(dta_files))
   data_list <- Filter(Negate(is.null), data_list)
-  
+
   if (length(data_list) == 0) {
+    log_error("No data files could be loaded")
     return(load_sample_data())
   }
-  
-  # Combine and process microdata
-  combined <- bind_rows(data_list, .id = "source_file")
-  
-  list(
+
+  # Combine all datasets
+  log_info("Combining microdata files...")
+  combined <- if (length(data_list) == 1) {
+    data_list[[1]]
+  } else {
+    bind_rows(data_list, .id = "source_file")
+  }
+
+  log_info(sprintf("Combined dataset: %d observations, %d variables",
+                  nrow(combined), ncol(combined)))
+
+  # Process and structure the data
+  processed <- process_microdata(combined)
+
+  # Extract metadata
+  countries <- extract_countries_from_microdata(combined)
+  years <- extract_years_from_microdata(combined)
+
+  result <- list(
     raw = combined,
-    latest = combined,
-    countries = unique(combined$country),
-    years = if ("year" %in% names(combined)) sort(unique(combined$year)) else integer(),
+    processed = processed,
+    latest = processed,  # For compatibility
+    countries = countries,
+    country_codes = unique(combined$a0) |> na.omit() |> as.character(),
+    years = years,
     metadata = list(
       source = "World Bank Enterprise Surveys (Microdata)",
       url = "https://www.enterprisesurveys.org/en/survey-datasets",
       files = names(data_list),
-      observations = nrow(combined)
+      observations = nrow(combined),
+      variables = ncol(combined),
+      loaded_at = Sys.time()
     ),
     quality = generate_quality_metadata()
   )
+
+  log_info("Microdata loading complete")
+  return(result)
+}
+
+#' Process raw microdata into analysis-ready format
+#' @param data Raw microdata from WBES
+#' @return Processed data frame
+process_microdata <- function(data) {
+
+  log_info("Processing microdata...")
+
+  # Common WBES variable mappings
+  # These are typical variable names in WBES microdata
+  var_mappings <- list(
+    country = c("a0", "country", "economy"),
+    year = c("a1", "year", "survey_year"),
+    sector = c("a4a", "sector", "industry"),
+    firm_size = c("a6a", "size", "l1"),
+    firm_age = c("b5", "age", "years_operation"),
+
+    # Infrastructure
+    power_outages = c("c6", "outages_number"),
+    outage_hours = c("c7", "outage_duration"),
+    generator = c("c8", "generator_dummy"),
+    water_problems = c("c16", "water_dummy"),
+
+    # Finance
+    bank_account = c("k5", "checking_saving"),
+    credit_line = c("k8", "loan_dummy"),
+    loan_application = c("k16", "applied_loan"),
+
+    # Corruption
+    bribery = c("j7a", "gift_expected"),
+    informal_payment = c("j7b", "informal_payment"),
+
+    # Performance
+    capacity_util = c("f1", "capacity_utilization"),
+    exports = c("d3c", "direct_exports"),
+    sales = c("d2", "total_sales"),
+
+    # Demographics
+    female_owner = c("b4", "female_ownership"),
+    female_top_mgr = c("b7a", "female_top_manager"),
+    experience = c("b7", "manager_experience")
+  )
+
+  # Select and rename variables that exist
+  processed <- data
+
+  # Standardize country identifier
+  for (var in c("a0", "country", "economy")) {
+    if (var %in% names(processed)) {
+      processed$country <- processed[[var]]
+      break
+    }
+  }
+
+  # Standardize year
+  for (var in c("a1", "year", "survey_year")) {
+    if (var %in% names(processed)) {
+      processed$year <- processed[[var]]
+      break
+    }
+  }
+
+  # Add region and income group if we have country codes
+  if ("a0" %in% names(processed)) {
+    processed <- add_country_metadata_to_microdata(processed)
+  }
+
+  log_info(sprintf("Processed %d records", nrow(processed)))
+
+  return(processed)
+}
+
+#' Extract country list from microdata
+#' @param data Microdata frame
+#' @return Vector of countries
+extract_countries_from_microdata <- function(data) {
+  # Try different country variable names
+  for (var in c("country", "a0", "economy", "countryname")) {
+    if (var %in% names(data)) {
+      countries <- unique(data[[var]]) |>
+        na.omit() |>
+        as.character()
+      return(countries)
+    }
+  }
+  character(0)
+}
+
+#' Extract years from microdata
+#' @param data Microdata frame
+#' @return Vector of years
+extract_years_from_microdata <- function(data) {
+  # Try different year variable names
+  for (var in c("year", "a1", "survey_year", "surveyyear")) {
+    if (var %in% names(data)) {
+      years <- unique(data[[var]]) |>
+        na.omit() |>
+        as.integer() |>
+        sort()
+      return(years)
+    }
+  }
+  integer(0)
+}
+
+#' Add country metadata to microdata
+#' @param data Microdata with country codes
+#' @return Data with region/income metadata
+add_country_metadata_to_microdata <- function(data) {
+
+  tryCatch({
+    # Fetch country metadata from World Bank API
+    url <- sprintf("%s/country/all?format=json&per_page=300", WB_API_BASE)
+    response <- GET(url)
+    json <- fromJSON(content(response, as = "text", encoding = "UTF-8"), flatten = TRUE)
+
+    if (length(json) >= 2) {
+      countries <- as.data.frame(json[[2]]) |>
+        select(
+          a0 = id,
+          country_name = name,
+          region = region.value,
+          income_group = incomeLevel.value
+        ) |>
+        filter(!is.na(region) & region != "Aggregates")
+
+      # Join with data
+      data <- left_join(data, countries, by = "a0")
+    }
+
+    data
+
+  }, error = function(e) {
+    log_warn("Could not fetch country metadata for microdata")
+    data
+  })
 }
 
 #' Generate sample data for demonstration
