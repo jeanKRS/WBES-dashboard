@@ -23,8 +23,7 @@ box::use(
 )
 
 #' @export
-ui <- function(id) {
-  ns <- NS(id)
+ui <- function(request) {
 
   # Kwiz Research Theme
   kwiz_theme <- bs_theme(
@@ -44,7 +43,7 @@ ui <- function(id) {
     bs_add_rules(sass::sass_file("app/styles/main.scss"))
 
   page_navbar(
-    id = ns("main_navbar"),
+    id = "main_navbar",
     title = tags$span(
       tags$img(
         src = "static/images/logo.svg",
@@ -71,35 +70,35 @@ ui <- function(id) {
       title = "Overview",
       value = "overview",
       icon = icon("globe"),
-      mod_overview$ui(ns("overview"))
+      mod_overview$ui("overview")
     ),
 
     nav_panel(
       title = "Country Profile",
       value = "country_profile",
       icon = icon("flag"),
-      mod_country_profile$ui(ns("country_profile"))
+      mod_country_profile$ui("country_profile")
     ),
 
     nav_panel(
       title = "Cross-Country Benchmark",
       value = "benchmark",
       icon = icon("chart-bar"),
-      mod_benchmark$ui(ns("benchmark"))
+      mod_benchmark$ui("benchmark")
     ),
 
     nav_panel(
       title = "Infrastructure",
       value = "infrastructure",
       icon = icon("bolt"),
-      mod_infrastructure$ui(ns("infrastructure"))
+      mod_infrastructure$ui("infrastructure")
     ),
 
     nav_panel(
       title = "Access to Finance",
       value = "finance",
       icon = icon("university"),
-      mod_finance_access$ui(ns("finance"))
+      mod_finance_access$ui("finance")
     ),
 
     nav_spacer(),
@@ -108,14 +107,14 @@ ui <- function(id) {
       title = "Data Quality",
       value = "data_quality",
       icon = icon("clipboard-check"),
-      mod_data_quality$ui(ns("data_quality"))
+      mod_data_quality$ui("data_quality")
     ),
 
     nav_panel(
       title = "About",
       value = "about",
       icon = icon("info-circle"),
-      mod_about$ui(ns("about"))
+      mod_about$ui("about")
     ),
 
     nav_item(
@@ -166,46 +165,44 @@ ui <- function(id) {
 }
 
 #' @export
-server <- function(id) {
-  moduleServer(id, function(input, output, session) {
+server <- function(input, output, session) {
 
-    # Show loading screen
-    waiter_show(
-      html = tags$div(
-        spin_fading_circles(),
-        tags$h4("Loading WBES Data...", class = "mt-3", style = "color: #1B6B5F;")
-      ),
-      color = "#FFFFFF"
-    )
+  # Show loading screen
+  waiter_show(
+    html = tags$div(
+      spin_fading_circles(),
+      tags$h4("Loading WBES Data...", class = "mt-3", style = "color: #1B6B5F;")
+    ),
+    color = "#FFFFFF"
+  )
 
-    # Load data reactively (shared across modules)
-    wbes_data <- shiny::reactiveVal(NULL)
+  # Load data reactively (shared across modules)
+  wbes_data <- shiny::reactiveVal(NULL)
 
-    # Initialize data loading with improved error handling
-    shiny::observe({
-      tryCatch({
-        # Load data from assets.zip, .dta files, API, or sample data
-        data <- load_wbes_data(data_path = "data/", use_cache = TRUE, cache_hours = 24)
-        wbes_data(data)
+  # Initialize data loading with improved error handling
+  shiny::observe({
+    tryCatch({
+      # Load data from assets.zip, .dta files, API, or sample data
+      data <- load_wbes_data(data_path = "data/", use_cache = TRUE, cache_hours = 24)
+      wbes_data(data)
 
-      }, error = function(e) {
-        message("Error loading WBES data: ", e$message)
-        # Load sample data as fallback
-        data <- load_wbes_data()  # Will fallback to sample data
-        wbes_data(data)
-      })
-
-      # Hide waiter after data loads
-      waiter_hide()
+    }, error = function(e) {
+      message("Error loading WBES data: ", e$message)
+      # Load sample data as fallback
+      data <- load_wbes_data()  # Will fallback to sample data
+      wbes_data(data)
     })
 
-    # Module servers
-    mod_overview$server("overview", wbes_data)
-    mod_country_profile$server("country_profile", wbes_data)
-    mod_benchmark$server("benchmark", wbes_data)
-    mod_infrastructure$server("infrastructure", wbes_data)
-    mod_finance_access$server("finance", wbes_data)
-    mod_data_quality$server("data_quality", wbes_data)
-    mod_about$server("about")
+    # Hide waiter after data loads
+    waiter_hide()
   })
+
+  # Module servers
+  mod_overview$server("overview", wbes_data)
+  mod_country_profile$server("country_profile", wbes_data)
+  mod_benchmark$server("benchmark", wbes_data)
+  mod_infrastructure$server("infrastructure", wbes_data)
+  mod_finance_access$server("finance", wbes_data)
+  mod_data_quality$server("data_quality", wbes_data)
+  mod_about$server("about")
 }
