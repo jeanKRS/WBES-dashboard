@@ -2,7 +2,7 @@
 # Business Performance & Trade Analysis Module
 
 box::use(
-  shiny[moduleServer, NS, reactive, req, tags, div, icon, h2, h3, p,
+  shiny[moduleServer, NS, reactive, req, tags, div, icon, h2, h3, p, strong,
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body],
   plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config],
