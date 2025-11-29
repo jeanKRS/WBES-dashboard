@@ -204,8 +204,8 @@ ui <- function(request) {
   )
 }
 
-#' @export
-server <- function(input, output, session) {
+  #' @export
+  server <- function(input, output, session) {
 
   # Show loading screen
   waiter_show(
@@ -216,8 +216,8 @@ server <- function(input, output, session) {
     color = "#FFFFFF"
   )
 
-  # Load data reactively (shared across modules)
-  wbes_data <- shiny::reactiveVal(NULL)
+    # Load data reactively (shared across modules)
+    wbes_data <- shiny::reactiveVal(NULL)
 
   # Initialize data loading with improved error handling
   shiny::observe({
