@@ -375,6 +375,8 @@ process_microdata <- function(data) {
         if ("wbincome" %in% names(data)) as.character(as_factor(get0("wbincome", ifnotfound = NULL))) else NULL
       ),
       sector = if ("stra_sector" %in% names(data)) as.character(as_factor(stra_sector)) else NA_character_,
+      firm_size = if ("size" %in% names(data)) as.character(as_factor(size)) else NA_character_,
+      female_ownership = if ("gend1" %in% names(data)) as.numeric(gend1) > 0 else NA,  # Binary: has female ownership
       sample_weight = get0("wt", ifnotfound = NA_real_),
 
       # Infrastructure
@@ -420,7 +422,7 @@ process_microdata <- function(data) {
       # Workforce and gender
       female_ownership_pct = coalesce_num(get0("gend1", ifnotfound = NULL)),
       female_workers_pct = coalesce_num(get0("gend2", ifnotfound = NULL)),
-      workforce_obstacle_pct = coalesce_num(get0("l3", ifnotfound = NULL)),  # Workforce quality obstacle
+      workforce_obstacle_pct = coalesce_num(get0("wk10", ifnotfound = NULL)),  # Workforce quality obstacle (wk10 in data)
 
       # Performance and exports
       capacity_utilization_pct = coalesce_num(get0("t3", ifnotfound = NULL)),

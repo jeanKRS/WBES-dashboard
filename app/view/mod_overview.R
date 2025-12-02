@@ -8,7 +8,7 @@ box::use(
  plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config],
  leaflet[leafletOutput, renderLeaflet, leaflet, addTiles, addCircleMarkers,
          setView, colorNumeric, addLegend],
- dplyr[filter, arrange, desc, mutate, summarise, group_by, n],
+ dplyr[filter, arrange, desc, mutate, summarise, group_by, n, pull],
  stats[setNames, na.omit]
 )
 
@@ -244,11 +244,16 @@ server <- function(id, wbes_data) {
      req(wbes_data())
      data <- wbes_data()$latest
 
-     if (input$region_filter != "all") {
-       data <- filter(data, region == input$region_filter)
+     # Ensure data is not NULL before filtering
+     if (is.null(data) || nrow(data) == 0) {
+       return(NULL)
      }
-     if (input$income_filter != "all") {
-       data <- filter(data, income_group == input$income_filter)
+
+     if (input$region_filter != "all" && !is.na(input$region_filter)) {
+       data <- data |> filter(!is.na(region) & region == input$region_filter)
+     }
+     if (input$income_filter != "all" && !is.na(input$income_filter)) {
+       data <- data |> filter(!is.na(income_group) & income_group == input$income_filter)
      }
 
      data

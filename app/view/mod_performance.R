@@ -185,8 +185,11 @@ server <- function(id, wbes_data) {
     observeEvent(wbes_data(), {
       req(wbes_data())
       d <- wbes_data()$latest
-      regions <- c("All" = "all", setNames(unique(d$region), unique(d$region)))
-      incomes <- c("All" = "all", setNames(unique(d$income_group), unique(d$income_group)))
+      # Filter out NA values from region and income_group
+      regions_vec <- unique(d$region) |> stats::na.omit() |> as.character() |> sort()
+      incomes_vec <- unique(d$income_group) |> stats::na.omit() |> as.character() |> sort()
+      regions <- c("All" = "all", setNames(regions_vec, regions_vec))
+      incomes <- c("All" = "all", setNames(incomes_vec, incomes_vec))
       shiny::updateSelectInput(session, "region", choices = regions)
       shiny::updateSelectInput(session, "income", choices = incomes)
     })
@@ -195,8 +198,12 @@ server <- function(id, wbes_data) {
     filtered <- reactive({
       req(wbes_data())
       d <- wbes_data()$latest
-      if (input$region != "all") d <- filter(d, region == input$region)
-      if (input$income != "all") d <- filter(d, income_group == input$income)
+      if (input$region != "all" && !is.na(input$region)) {
+        d <- d |> filter(!is.na(region) & region == input$region)
+      }
+      if (input$income != "all" && !is.na(input$income)) {
+        d <- d |> filter(!is.na(income_group) & income_group == input$income)
+      }
       d
     })
 
