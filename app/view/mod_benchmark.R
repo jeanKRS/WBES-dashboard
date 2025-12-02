@@ -89,7 +89,11 @@ ui <- function(id) {
         card(
           card_header(icon("chart-bar"), "Country Comparison"),
           card_body(
-            plotlyOutput(ns("comparison_bar"), height = "450px")
+            plotlyOutput(ns("comparison_bar"), height = "450px"),
+            p(class = "text-muted mt-3 small",
+              "Benchmarks selected countries across chosen indicators. ",
+              "Bars are ranked to easily identify leaders and laggards. Use filters above to compare specific countries or regions. ",
+              "Lower values generally indicate better conditions (fewer obstacles), except for positive indicators like bank account ownership.")
           )
         )
       )
@@ -102,7 +106,10 @@ ui <- function(id) {
         card(
           card_header(icon("chart-pie"), "Regional Distribution"),
           card_body(
-            plotlyOutput(ns("regional_pie"), height = "350px")
+            plotlyOutput(ns("regional_pie"), height = "350px"),
+            p(class = "text-muted mt-3 small",
+              "Shows the distribution of surveyed countries across geographic regions. ",
+              "Slice size reflects survey coverage. Sub-Saharan Africa typically has the highest coverage given its development priorities.")
           )
         )
       ),
@@ -126,7 +133,11 @@ ui <- function(id) {
                   ), selected = "capacity_utilization_pct")
               )
             ),
-            plotlyOutput(ns("scatter_plot"), height = "280px")
+            plotlyOutput(ns("scatter_plot"), height = "280px"),
+            p(class = "text-muted mt-2 small",
+              "Explores relationships between business constraints and firm performance. ",
+              "Each point represents a country. Negative correlations (downward slope) suggest that higher constraints reduce performance. ",
+              "Use dropdown menus to test different variable combinations.")
           )
         )
       )
