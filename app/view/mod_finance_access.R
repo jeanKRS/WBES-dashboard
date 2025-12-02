@@ -195,13 +195,16 @@ server <- function(id, wbes_data) {
       req(wbes_data())
       data <- wbes_data()$processed
 
+      # Return NULL if data is NULL or empty
+      if (is.null(data) || nrow(data) == 0) return(NULL)
+
       # Apply region filter
       if (input$region_filter != "all" && !is.na(input$region_filter)) {
         data <- data |> filter(!is.na(region) & region == input$region_filter)
       }
 
-      # Apply firm size filter
-      if (input$firm_size != "all" && !is.na(input$firm_size)) {
+      # Apply firm size filter (check if column exists first)
+      if ("firm_size" %in% names(data) && input$firm_size != "all" && !is.na(input$firm_size)) {
         data <- data |> filter(!is.na(firm_size) & firm_size == input$firm_size)
       }
 
