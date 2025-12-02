@@ -8,9 +8,6 @@ box::use(app/logic/column_labels)
 load_wbes_data <- wbes_data$load_wbes_data
 
 #' @export
-load_sample_data <- wbes_data$load_sample_data
-
-#' @export
 generate_quality_metadata <- wbes_data$generate_quality_metadata
 
 # Column label management

@@ -18,18 +18,20 @@ box::use(
 RAW_DTA_FILENAME <- "ES-Indicators-Database-Global-Methodology_November_24_2025.dta"
 
 #' Load complete WBES dataset
-#' This function attempts to load data in order of preference:
+#' This function loads real WBES microdata from local files.
+#' Attempts to load data in order of preference:
 #' 1. Cached processed data (.rds) if present and recent
-#' 2. Local microdata from assets.zip if present
-#' 3. Individual .dta files if present
-#' 4. Sample data as fallback (with prominent warning)
-#' @param data_path Path to data directory
-#' @param use_cache Whether to use cached data
-#' @param cache_hours Hours before cache expires
-#' @param require_real_data If TRUE, fails loudly when real data is missing (default: FALSE for compatibility)
+#' 2. Local microdata from assets.zip
+#' 3. Individual .dta files
+#'
+#' IMPORTANT: Real data is REQUIRED. The app will fail if data is not found.
+#'
+#' @param data_path Path to data directory (default: "data/")
+#' @param use_cache Whether to use cached data (default: TRUE)
+#' @param cache_hours Hours before cache expires (default: 24)
 #' @return List with WBES data components
 #' @export
-load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 24, require_real_data = FALSE) {
+load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 24) {
 
   log_info("Loading WBES data...")
 
@@ -39,16 +41,7 @@ load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 
     cache_age <- difftime(Sys.time(), file.mtime(cache_file), units = "hours")
     if (cache_age < cache_hours) {
       log_info("Loading from cache (processed data)")
-      cached_data <- readRDS(cache_file)
-
-      # Validate that cached data is real data if required
-      if (require_real_data && !is.null(cached_data$metadata$note) &&
-          grepl("Sample Data|Simulated", cached_data$metadata$note, ignore.case = TRUE)) {
-        log_error("Cached data is sample data but real data is required")
-        stop("REAL DATA REQUIRED: Cached data is sample/simulated data. Please provide real WBES microdata in data/assets.zip")
-      }
-
-      return(cached_data)
+      return(readRDS(cache_file))
     }
   }
 
@@ -94,57 +87,31 @@ load_wbes_data <- function(data_path = "data/", use_cache = TRUE, cache_hours = 
     log_warn("No .dta files found in data/ directory")
   }
 
-  # NO REAL DATA FOUND - Fail loudly if required
-  if (require_real_data) {
-    error_msg <- paste0(
-      "\n\n",
-      "╔════════════════════════════════════════════════════════════════════════════╗\n",
-      "║ REAL DATA REQUIRED BUT NOT FOUND                                          ║\n",
-      "╠════════════════════════════════════════════════════════════════════════════╣\n",
-      "║                                                                            ║\n",
-      "║ The WBES dashboard requires real microdata to run, but none was found.    ║\n",
-      "║                                                                            ║\n",
-      "║ Expected data file:                                                        ║\n",
-      "║   ", RAW_DTA_FILENAME, "                                                  ║\n",
-      "║                                                                            ║\n",
-      "║ Required setup:                                                            ║\n",
-      "║   1. Download the WBES microdata from:                                     ║\n",
-      "║      https://www.enterprisesurveys.org/en/survey-datasets                 ║\n",
-      "║   2. Create a ZIP file named 'assets.zip' containing the .dta file         ║\n",
-      "║   3. Place assets.zip in: ", normalizePath(data_path, mustWork = FALSE), "  ║\n",
-      "║                                                                            ║\n",
-      "║ Alternative: Place .dta files directly in the data/ directory              ║\n",
-      "║                                                                            ║\n",
-      "╚════════════════════════════════════════════════════════════════════════════╝\n"
-    )
-    log_error(error_msg)
-    stop(error_msg)
-  }
-
-  # Fallback to sample data with prominent warning
-  warning_msg <- paste0(
+  # NO REAL DATA FOUND - Always fail (no sample data fallback)
+  error_msg <- paste0(
     "\n\n",
     "╔════════════════════════════════════════════════════════════════════════════╗\n",
-    "║ WARNING: USING SAMPLE DATA (NOT REAL WBES MICRODATA)                     ║\n",
+    "║ REAL DATA REQUIRED BUT NOT FOUND                                          ║\n",
     "╠════════════════════════════════════════════════════════════════════════════╣\n",
     "║                                                                            ║\n",
-    "║ No real WBES data found in ", data_path, "                                 ║\n",
+    "║ The WBES dashboard requires real microdata to run, but none was found.    ║\n",
     "║                                                                            ║\n",
-    "║ The dashboard is loading SIMULATED sample data for demonstration only.    ║\n",
-    "║ This is NOT real World Bank Enterprise Survey data.                       ║\n",
+    "║ Expected data file:                                                        ║\n",
+    "║   ", RAW_DTA_FILENAME, "                                                  ║\n",
     "║                                                                            ║\n",
-    "║ To use real data:                                                          ║\n",
-    "║   1. Download: ", RAW_DTA_FILENAME, "                                      ║\n",
-    "║      from: https://www.enterprisesurveys.org/en/survey-datasets           ║\n",
-    "║   2. Create assets.zip containing the .dta file                            ║\n",
-    "║   3. Place in: ", normalizePath(data_path, mustWork = FALSE), "            ║\n",
+    "║ Required setup:                                                            ║\n",
+    "║   1. Ensure assets.zip exists in: ", data_path, "                          ║\n",
+    "║   2. The ZIP file must contain: ", RAW_DTA_FILENAME, "                     ║\n",
+    "║   3. Encoding: latin1 (handled automatically)                              ║\n",
+    "║                                                                            ║\n",
+    "║ Alternative: Place .dta files directly in the data/ directory              ║\n",
+    "║                                                                            ║\n",
+    "║ Data source: https://www.enterprisesurveys.org/en/survey-datasets         ║\n",
     "║                                                                            ║\n",
     "╚════════════════════════════════════════════════════════════════════════════╝\n"
   )
-  log_warn(warning_msg)
-  message(warning_msg)
-
-  return(load_sample_data())
+  log_error(error_msg)
+  stop(error_msg)
 }
 
 #' Load microdata from ZIP archive
@@ -171,7 +138,7 @@ load_from_zip <- function(zip_file, data_path) {
 
     if (length(dta_files_in_zip) == 0) {
       log_error("No .dta files found in assets.zip")
-      return(load_sample_data())
+      stop("CRITICAL ERROR: assets.zip exists but contains no .dta files. Please ensure the ZIP contains: ", RAW_DTA_FILENAME)
     }
 
     log_info(paste("Found", length(dta_files_in_zip), ".dta file(s) in archive"))
@@ -195,7 +162,7 @@ load_from_zip <- function(zip_file, data_path) {
     log_error(paste("Error extracting/loading from zip:", e$message))
     # Cleanup on error
     base::unlink(extract_dir, recursive = TRUE)
-    return(load_sample_data())
+    stop("CRITICAL ERROR: Failed to load data from assets.zip: ", e$message)
   })
 }
 
@@ -230,7 +197,7 @@ load_microdata <- function(dta_files) {
 
   if (length(data_list) == 0) {
     log_error("No data files could be loaded")
-    return(load_sample_data())
+    stop("CRITICAL ERROR: .dta files found but none could be loaded. Check file format and encoding.")
   }
 
   # Combine all datasets
@@ -447,160 +414,6 @@ extract_years_from_microdata <- function(data) {
   }
   integer(0)
 }
-
-#' Generate sample data for demonstration
-#' @return Sample data list
-#' @export
-load_sample_data <- function() {
-
-  base::set.seed(42)
-  
-  # African countries focus (aligned with your work)
-  countries <- data.frame(
-    country = c(
-      "Kenya", "Nigeria", "South Africa", "Ghana", "Ethiopia",
-      "Tanzania", "Uganda", "Rwanda", "Senegal", "Cote d'Ivoire",
-      "Egypt", "Morocco", "Tunisia", "Botswana", "Zambia",
-      "India", "Bangladesh", "Vietnam", "Indonesia", "Philippines",
-      "Brazil", "Mexico", "Colombia", "Peru", "Chile",
-      "Poland", "Turkey", "Romania", "Bulgaria", "Serbia"
-    ),
-    country_code = c(
-      "KEN", "NGA", "ZAF", "GHA", "ETH",
-      "TZA", "UGA", "RWA", "SEN", "CIV",
-      "EGY", "MAR", "TUN", "BWA", "ZMB",
-      "IND", "BGD", "VNM", "IDN", "PHL",
-      "BRA", "MEX", "COL", "PER", "CHL",
-      "POL", "TUR", "ROU", "BGR", "SRB"
-    ),
-    region = c(
-      rep("Sub-Saharan Africa", 15),
-      rep("South Asia", 2),
-      rep("East Asia & Pacific", 3),
-      rep("Latin America & Caribbean", 5),
-      rep("Europe & Central Asia", 5)
-    ),
-    income_group = c(
-      "Lower middle income", "Lower middle income", "Upper middle income",
-      "Lower middle income", "Low income", "Lower middle income",
-      "Low income", "Low income", "Lower middle income", "Lower middle income",
-      "Lower middle income", "Lower middle income", "Lower middle income",
-      "Upper middle income", "Lower middle income",
-      "Lower middle income", "Lower middle income", "Lower middle income",
-      "Lower middle income", "Lower middle income",
-      "Upper middle income", "Upper middle income", "Upper middle income",
-      "Upper middle income", "High income",
-      "High income", "Upper middle income", "Upper middle income",
-      "Upper middle income", "Upper middle income"
-    ),
-    stringsAsFactors = FALSE
-  )
-  
-  years <- 2019:2023
-  n <- nrow(countries) * length(years)
-  
-  # Generate panel data
-  panel <- expand.grid(
-    country_code = countries$country_code,
-    year = years,
-    stringsAsFactors = FALSE
-  ) |>
-    left_join(countries, by = "country_code")
-  
-  n <- nrow(panel)
-  
-  # Add realistic indicator values with regional variation
-  ssa_bonus <- ifelse(panel$region == "Sub-Saharan Africa", 1.3, 1)
-  
-  panel <- panel |>
-    mutate(
-      # Infrastructure - World Bank codes
-      IC.FRM.OUTG.ZS = round(base::pmin(100, runif(n, 15, 45) * ssa_bonus), 1),
-      IC.FRM.ELEC.ZS = round(base::pmin(100, runif(n, 20, 50) * ssa_bonus), 1),
-      IC.FRM.INFRA.ZS = round(base::pmin(100, runif(n, 15, 40) * ssa_bonus), 1),
-
-      # Access to Finance - World Bank codes
-      IC.FRM.FINA.ZS = round(runif(n, 20, 55), 1),
-      IC.FRM.BANK.ZS = round(runif(n, 75, 98), 1),
-      IC.FRM.CRED.ZS = round(runif(n, 15, 50), 1),
-
-      # Corruption - World Bank codes
-      IC.FRM.CORR.ZS = round(runif(n, 10, 45), 1),
-      IC.FRM.BRIB.ZS = round(runif(n, 8, 35), 1),
-
-      # Workforce - World Bank codes
-      IC.FRM.WKFC.ZS = round(runif(n, 15, 45), 1),
-      IC.FRM.FEMW.ZS = round(runif(n, 20, 50), 1),
-      IC.FRM.FEMO.ZS = round(runif(n, 10, 45), 1),
-
-      # Performance - World Bank codes
-      IC.FRM.CAPU.ZS = round(runif(n, 55, 85), 1),
-      IC.FRM.EXPRT.ZS = round(runif(n, 5, 35), 1),
-
-      # Crime - World Bank codes
-      IC.FRM.CRIM.ZS = round(runif(n, 10, 40), 1),
-      IC.FRM.SECU.ZS = round(runif(n, 1, 5), 2),
-
-      # Friendly column names for compatibility
-      power_outages_per_month = round(runif(n, 0.5, 15), 1),
-      avg_outage_duration_hrs = round(runif(n, 2, 12), 1),
-      firms_with_generator_pct = round(runif(n, 20, 80), 1),
-      firms_with_credit_line_pct = round(runif(n, 15, 65), 1),
-      firms_with_bank_account_pct = round(runif(n, 75, 98), 1),
-      loan_rejection_rate_pct = round(runif(n, 10, 40), 1),
-      collateral_required_pct = round(runif(n, 40, 95), 1),
-      bribery_incidence_pct = round(runif(n, 5, 45), 1),
-      corruption_obstacle_pct = round(runif(n, 10, 45), 1),
-      capacity_utilization_pct = round(runif(n, 55, 90), 1),
-      export_share_pct = round(runif(n, 5, 40), 1),
-      export_firms_pct = round(runif(n, 5, 35), 1),
-      female_ownership_pct = round(runif(n, 10, 50), 1),
-      female_workers_pct = round(runif(n, 20, 50), 1),
-      crime_obstacle_pct = round(runif(n, 10, 40), 1),
-      security_costs_pct = round(runif(n, 1, 5), 2),
-
-      # Sample metadata
-      sample_size = round(runif(n, 150, 1500)),
-      response_rate = round(runif(n, 45, 85), 1),
-      data_quality_score = round(runif(n, 0.6, 1.0), 2)
-    )
-  
-  # Get latest year data
-  latest <- panel |>
-    group_by(country) |>
-    filter(year == max(year)) |>
-    ungroup()
-  
-  # Regional aggregates
-  regional <- latest |>
-    group_by(region) |>
-    summarise(
-      across(starts_with("IC."), ~mean(.x, na.rm = TRUE)),
-      n_countries = n(),
-      .groups = "drop"
-    )
-  
-  # Create label mapping for sample data
-  sample_label_mapping <- create_wbes_label_mapping(panel)
-
-  list(
-    raw = panel,
-    latest = latest,
-    regional = regional,
-    countries = unique(panel$country),
-    country_codes = unique(panel$country_code),
-    regions = unique(panel$region),
-    years = years,
-    column_labels = character(0),  # No extracted labels for sample data
-    label_mapping = sample_label_mapping,  # Use manual label mapping
-    metadata = list(
-      source = "World Bank Enterprise Surveys (Sample Data)",
-      url = "https://www.enterprisesurveys.org",
-      note = "Simulated data for demonstration. Download actual data from enterprisesurveys.org",
-      generated = Sys.Date(),
-      total_labels = length(sample_label_mapping)
-    ),
-    quality = generate_quality_metadata()
   )
 }
 
