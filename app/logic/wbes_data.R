@@ -10,7 +10,7 @@ box::use(
   haven[read_dta, as_factor],
   logger[log_info, log_warn, log_error],
   utils[unzip],
-  stats[runif, setNames],
+  stats[runif, setNames, na.omit],
   app/logic/column_labels[extract_column_labels, create_wbes_label_mapping]
 )
 
