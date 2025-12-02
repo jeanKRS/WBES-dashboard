@@ -239,11 +239,12 @@ load_microdata <- function(dta_files) {
   # Filter for valid columns that exist in the data
   available_metric_cols <- metric_cols[metric_cols %in% names(processed)]
 
+  # Create aggregates without using sample_weight in across()
   country_aggregates <- processed |>
     filter(!is.na(country) & !is.na(country_code)) |>
     group_by(country, country_code) |>
     summarise(
-      across(all_of(available_metric_cols), ~weighted_mean_safe(.x, sample_weight[1]), .names = "{.col}"),
+      across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
       region = first_non_na(region),
       income_group = first_non_na(income_group),
       sample_size = n(),
@@ -418,8 +419,6 @@ extract_years_from_microdata <- function(data) {
   }
   integer(0)
 }
-  )
-}
 
 #' Generate data quality documentation
 #' @return List with quality issues and filter documentation
@@ -488,7 +487,7 @@ generate_quality_metadata <- function() {
         r_code = "mutate(definition_flag = year < 2019)"
       )
     ),
-    
+
     filters = list(
       list(
         name = "Infrastructure Analysis",
@@ -535,7 +534,7 @@ wbes_data |>
   )"
       )
     ),
-    
+
     methodology_notes = c(
       "All indicators from Enterprise Surveys Global Methodology (2006+)",
       "Sampling weights should be applied for population-level inference",

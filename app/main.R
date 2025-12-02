@@ -8,7 +8,8 @@ box::use(
     bs_theme, bs_add_rules, nav_panel, nav_spacer,
     nav_item, page_navbar, card, card_header, card_body
   ],
-  waiter[useWaiter, waiterPreloader, spin_fading_circles, waiter_show, waiter_hide]
+  waiter[useWaiter, waiterPreloader, spin_fading_circles, waiter_show, waiter_hide],
+  here[here]
 )
 
 box::use(
