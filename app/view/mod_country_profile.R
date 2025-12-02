@@ -178,11 +178,17 @@ server <- function(id, wbes_data) {
     # Update country choices
     observeEvent(wbes_data(), {
       req(wbes_data())
-      countries <- sort(wbes_data()$countries)
+      # Extract unique countries from the latest dataset (already cleaned, no year suffix)
+      countries <- wbes_data()$latest$country |>
+        unique() |>
+        stats::na.omit() |>
+        as.character() |>
+        sort()
+
       shiny::updateSelectInput(
         session, "country_select",
         choices = setNames(countries, countries),
-        selected = countries[1]
+        selected = if(length(countries) > 0) countries[1] else NULL
       )
     })
 
@@ -190,7 +196,8 @@ server <- function(id, wbes_data) {
     country_data <- reactive({
       req(wbes_data(), input$country_select)
       data <- wbes_data()$latest
-      filter(data, country == input$country_select)
+      # Filter using the clean country name (year suffix already removed in data processing)
+      data |> filter(!is.na(country) & country == input$country_select)
     })
 
     # Country summary card

@@ -6,7 +6,8 @@ box::use(
         fluidRow, column, selectInput, renderUI, uiOutput, observeEvent],
   bslib[card, card_header, card_body],
   plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config],
-  dplyr[filter, arrange, mutate, group_by, summarise],
+  dplyr[filter, arrange, mutate, group_by, summarise, coalesce],
+  tidyr[pivot_wider],
   stats[setNames, runif]
 )
 
@@ -166,22 +167,62 @@ server <- function(id, wbes_data) {
     # Update filters
     observeEvent(wbes_data(), {
       req(wbes_data())
-      regions <- unique(wbes_data()$latest$region)
+      # Use processed firm-level data for filtering
+      data <- wbes_data()$processed
+
+      # Update region filter
+      regions <- unique(data$region) |> stats::na.omit() |> as.character() |> sort()
       shiny::updateSelectInput(session, "region_filter",
         choices = c("All Regions" = "all", setNames(regions, regions)))
+
+      # Update firm size filter
+      sizes <- unique(data$firm_size) |> stats::na.omit() |> as.character() |> sort()
+      if (length(sizes) > 0) {
+        shiny::updateSelectInput(session, "firm_size",
+          choices = c("All Sizes" = "all", setNames(sizes, sizes)))
+      }
+
+      # Update sector filter
+      sectors <- unique(data$sector) |> stats::na.omit() |> as.character() |> sort()
+      if (length(sectors) > 0) {
+        shiny::updateSelectInput(session, "sector",
+          choices = c("All Sectors" = "all", setNames(sectors, sectors)))
+      }
     })
-    
-    # Filtered data
+
+    # Filtered data - Use firm-level processed data
     filtered_data <- reactive({
       req(wbes_data())
-      data <- wbes_data()$latest
-      if (input$region_filter != "all") {
-        data <- filter(data, region == input$region_filter)
+      data <- wbes_data()$processed
+
+      # Apply region filter
+      if (input$region_filter != "all" && !is.na(input$region_filter)) {
+        data <- data |> filter(!is.na(region) & region == input$region_filter)
       }
+
+      # Apply firm size filter
+      if (input$firm_size != "all" && !is.na(input$firm_size)) {
+        data <- data |> filter(!is.na(firm_size) & firm_size == input$firm_size)
+      }
+
+      # Apply sector filter
+      if (input$sector != "all" && !is.na(input$sector)) {
+        data <- data |> filter(!is.na(sector) & sector == input$sector)
+      }
+
+      # Apply gender/ownership filter
+      if (input$gender != "all" && !is.na(input$gender)) {
+        if (input$gender == "female") {
+          data <- data |> filter(!is.na(female_ownership) & female_ownership == TRUE)
+        } else if (input$gender == "male") {
+          data <- data |> filter(!is.na(female_ownership) & female_ownership == FALSE)
+        }
+      }
+
       data
     })
     
-    # KPIs with NA handling
+    # KPIs with NA handling - aggregate from firm-level data
     # WBES variable mappings:
     # - firms_with_bank_account_pct: from fin15 (% firms with checking/savings account)
     # - firms_with_credit_line_pct: from fin14 (% firms with line of credit)
@@ -190,7 +231,8 @@ server <- function(id, wbes_data) {
     output$kpi_bank_account <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      avg <- if ("firms_with_bank_account_pct" %in% names(data)) {
+      # Calculate percentage across filtered firms
+      avg <- if ("firms_with_bank_account_pct" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$firms_with_bank_account_pct, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) paste0(round(val, 1), "%") else "N/A"
       } else "N/A"
@@ -203,7 +245,7 @@ server <- function(id, wbes_data) {
     output$kpi_credit_line <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      avg <- if ("firms_with_credit_line_pct" %in% names(data)) {
+      avg <- if ("firms_with_credit_line_pct" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$firms_with_credit_line_pct, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) paste0(round(val, 1), "%") else "N/A"
       } else "N/A"
@@ -216,7 +258,7 @@ server <- function(id, wbes_data) {
     output$kpi_collateral <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      avg <- if ("collateral_required_pct" %in% names(data)) {
+      avg <- if ("collateral_required_pct" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$collateral_required_pct, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) paste0(round(val, 0), "%") else "N/A"
       } else "N/A"
@@ -229,7 +271,7 @@ server <- function(id, wbes_data) {
     output$kpi_rejection <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      avg <- if ("loan_rejection_rate_pct" %in% names(data)) {
+      avg <- if ("loan_rejection_rate_pct" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$loan_rejection_rate_pct, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) paste0(round(val, 1), "%") else "N/A"
       } else "N/A"
@@ -239,14 +281,14 @@ server <- function(id, wbes_data) {
       )
     })
     
-    # Finance by region - uses actual regional aggregates from wbes_data
+    # Finance by region - uses filtered firm-level data
     # WBES variables: fin15 (bank account), fin14 (credit line), loan data
     output$finance_by_region <- renderPlotly({
-      req(wbes_data())
-      data <- wbes_data()$latest
+      req(filtered_data())
+      data <- filtered_data()
 
-      # Calculate regional aggregates from actual data
-      if (!is.null(data) && "region" %in% names(data)) {
+      # Calculate regional aggregates from filtered firm-level data
+      if (!is.null(data) && nrow(data) > 0 && "region" %in% names(data)) {
         regional <- data |>
           filter(!is.na(region)) |>
           group_by(region) |>
@@ -300,32 +342,32 @@ server <- function(id, wbes_data) {
       }
     })
     
-    # No apply reasons - uses actual WBES data
+    # No apply reasons - uses filtered firm-level data
     # Variables: fin19a-fin19e (reasons for not applying for loan)
     output$no_apply_reasons <- renderPlotly({
-      req(wbes_data())
-      data <- wbes_data()$latest
+      req(filtered_data())
+      data <- filtered_data()
 
-      # Calculate average percentages for each reason across all countries
+      # Calculate average percentages for each reason from filtered firms
       reasons_list <- list()
 
-      if ("no_need_for_loan" %in% names(data)) {
+      if ("no_need_for_loan" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$no_need_for_loan, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) reasons_list$`No Need` <- val
       }
-      if ("loan_interest_high" %in% names(data)) {
+      if ("loan_interest_high" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$loan_interest_high, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) reasons_list$`High Interest` <- val
       }
-      if ("loan_procedures_complex" %in% names(data)) {
+      if ("loan_procedures_complex" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$loan_procedures_complex, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) reasons_list$`Complex Procedures` <- val
       }
-      if ("insufficient_collateral" %in% names(data)) {
+      if ("insufficient_collateral" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$insufficient_collateral, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) reasons_list$`Collateral Issues` <- val
       }
-      if ("loan_size_inadequate" %in% names(data)) {
+      if ("loan_size_inadequate" %in% names(data) && nrow(data) > 0) {
         val <- mean(data$loan_size_inadequate, na.rm = TRUE)
         if (!is.nan(val) && !is.na(val)) reasons_list$`Loan Size Issues` <- val
       }
@@ -364,22 +406,34 @@ server <- function(id, wbes_data) {
       }
     })
     
-    # SME finance gap
+    # SME finance gap - aggregate firm-level data by country
     output$sme_finance_gap <- renderPlotly({
       req(filtered_data())
-      data <- filtered_data()
-      data <- arrange(data, desc(firms_with_credit_line_pct))[1:12, ]
-      data$country <- factor(data$country, levels = rev(data$country))
-      
-      # Simulated gap data
-      data$need <- data$firms_with_credit_line_pct + runif(nrow(data), 20, 40)
-      data$gap <- data$need - data$firms_with_credit_line_pct
-      
-      plot_ly(data) |>
+      firm_data <- filtered_data()
+
+      # Aggregate by country
+      if (nrow(firm_data) > 0 && "country" %in% names(firm_data)) {
+        data <- firm_data |>
+          group_by(country) |>
+          summarise(
+            firms_with_credit_line_pct = mean(firms_with_credit_line_pct, na.rm = TRUE),
+            .groups = "drop"
+          ) |>
+          filter(!is.na(firms_with_credit_line_pct)) |>
+          arrange(desc(firms_with_credit_line_pct)) |>
+          head(12)
+
+        data$country <- factor(data$country, levels = rev(data$country))
+
+        # Simulated gap data
+        data$need <- data$firms_with_credit_line_pct + runif(nrow(data), 20, 40)
+        data$gap <- data$need - data$firms_with_credit_line_pct
+
+        plot_ly(data) |>
         add_trace(y = ~country, x = ~firms_with_credit_line_pct, 
                   name = "Current Access", type = "bar", orientation = "h",
                   marker = list(color = "#1B6B5F")) |>
-        add_trace(y = ~country, x = ~gap, 
+        add_trace(y = ~country, x = ~gap,
                   name = "Unmet Need (Gap)", type = "bar", orientation = "h",
                   marker = list(color = "#F49B7A")) |>
         layout(
@@ -391,86 +445,81 @@ server <- function(id, wbes_data) {
           paper_bgcolor = "rgba(0,0,0,0)"
         ) |>
         config(displayModeBar = FALSE)
+      } else {
+        # Empty plot if no data
+        plot_ly() |>
+          layout(
+            title = "No data available",
+            paper_bgcolor = "rgba(0,0,0,0)"
+          )
+      }
     })
     
-    # Gender gap - Calculate from firm-level data disaggregated by female ownership
-    # Note: WBES data typically doesn't have pre-aggregated gender gaps
-    # We would need to calculate from raw/processed data with gender disaggregation
+    # Gender gap - Calculate from filtered firm-level data disaggregated by female ownership
     output$gender_gap <- renderPlotly({
-      req(wbes_data())
+      req(filtered_data())
+      firm_data <- filtered_data()
 
-      # Calculate gender gap using processed data if available
-      # This requires firm-level data with gender indicator
-      # For now, show a summary comparing female vs non-female owned firms
+      # Calculate gender gap using firm-level data with female ownership indicator
+      if (!is.null(firm_data) && nrow(firm_data) > 0 &&
+          "female_ownership" %in% names(firm_data) &&
+          "firms_with_credit_line_pct" %in% names(firm_data) &&
+          "country" %in% names(firm_data)) {
 
-      raw_data <- wbes_data()$processed
+        # Disaggregate by female ownership
+        gender_data <- firm_data |>
+          filter(!is.na(female_ownership) & !is.na(firms_with_credit_line_pct)) |>
+          group_by(country, female_ownership) |>
+          summarise(
+            credit_access = mean(firms_with_credit_line_pct, na.rm = TRUE),
+            .groups = "drop"
+          ) |>
+          tidyr::pivot_wider(
+            names_from = female_ownership,
+            values_from = credit_access,
+            names_prefix = "female_"
+          ) |>
+          mutate(
+            gap = female_FALSE - female_TRUE,  # Positive = female-owned have less access
+            male_access = coalesce(female_FALSE, 0),
+            female_access = coalesce(female_TRUE, 0)
+          ) |>
+          filter(!is.na(gap)) |>
+          arrange(desc(gap)) |>
+          head(12)
 
-      if (!is.null(raw_data) && "female_ownership_pct" %in% names(raw_data) &&
-          "firms_with_credit_line_pct" %in% names(raw_data)) {
+        if (nrow(gender_data) > 0) {
+          gender_data$country <- factor(gender_data$country, levels = rev(gender_data$country))
 
-        # Attempt to disaggregate by female ownership
-        # Note: This is an approximation based on available data
-        # Ideally would use binary female_owned indicator from raw data
-
-        tryCatch({
-          # Check if we have gender disaggregation variable
-          if ("b4" %in% names(raw_data)) {  # b4 is often the gender ownership indicator
-            gender_finance <- raw_data |>
-              mutate(is_female_owned = ifelse(b4 == 1, "Female-Owned", "Male-Owned")) |>
-              group_by(is_female_owned) |>
-              summarise(
-                credit_line = mean(firms_with_credit_line_pct, na.rm = TRUE),
-                .groups = "drop"
-              )
-
-            if (nrow(gender_finance) == 2) {
-              plot_ly(gender_finance) |>
-                add_trace(x = ~"Credit Access", y = ~credit_line,
-                          color = ~is_female_owned,
-                          colors = c("Female-Owned" = "#F49B7A", "Male-Owned" = "#1B6B5F"),
-                          type = "bar") |>
-                layout(
-                  barmode = "group",
-                  xaxis = list(title = ""),
-                  yaxis = list(title = "% of Firms", ticksuffix = "%"),
-                  legend = list(orientation = "h", y = -0.15),
-                  paper_bgcolor = "rgba(0,0,0,0)"
-                ) |>
-                config(displayModeBar = FALSE)
-            } else {
-              # Not enough gender data
-              plot_ly() |>
-                layout(
-                  annotations = list(
-                    text = "Gender disaggregated finance data not available",
-                    xref = "paper", yref = "paper",
-                    x = 0.5, y = 0.5, showarrow = FALSE
-                  ),
-                  paper_bgcolor = "rgba(0,0,0,0)"
-                )
-            }
-          } else {
-            plot_ly() |>
-              layout(
-                annotations = list(
-                  text = "Gender disaggregated finance data not available",
-                  xref = "paper", yref = "paper",
-                  x = 0.5, y = 0.5, showarrow = FALSE
-                ),
-                paper_bgcolor = "rgba(0,0,0,0)"
-              )
-          }
-        }, error = function(e) {
+          # Plot gender gap by country
+          plot_ly(gender_data) |>
+            add_trace(y = ~country, x = ~female_access,
+                      name = "Female-Owned", type = "bar", orientation = "h",
+                      marker = list(color = "#F49B7A")) |>
+            add_trace(y = ~country, x = ~male_access,
+                      name = "Male-Owned", type = "bar", orientation = "h",
+                      marker = list(color = "#1B6B5F")) |>
+            layout(
+              barmode = "group",
+              xaxis = list(title = "% with Credit Access", ticksuffix = "%"),
+              yaxis = list(title = ""),
+              legend = list(orientation = "h", y = -0.15),
+              margin = list(l = 100),
+              paper_bgcolor = "rgba(0,0,0,0)"
+            ) |>
+            config(displayModeBar = FALSE)
+        } else {
+          # Not enough gender data
           plot_ly() |>
             layout(
               annotations = list(
-                text = "Unable to compute gender gap",
+                text = "Gender disaggregated finance data not available",
                 xref = "paper", yref = "paper",
                 x = 0.5, y = 0.5, showarrow = FALSE
               ),
               paper_bgcolor = "rgba(0,0,0,0)"
             )
-        })
+        }
       } else {
         plot_ly() |>
           layout(
