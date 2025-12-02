@@ -2,7 +2,7 @@
 # Dashboard Overview Module
 
 box::use(
- shiny[moduleServer, NS, reactive, req, tags, HTML, icon, div, h2, h3, h4, p, span, br,
+ shiny[moduleServer, NS, reactive, req, tags, HTML, icon, div, h2, h3, h4, p, span, br, a,
         fluidRow, column, selectInput, sliderInput, actionButton, observeEvent, renderUI, uiOutput],
  bslib[card, card_header, card_body, value_box, layout_columns],
  plotly[plotlyOutput, renderPlotly, plot_ly, layout, add_trace, config],
@@ -212,7 +212,7 @@ server <- function(id, wbes_data) {
      badge_class <- if (is_real_data) "alert-success" else "alert-warning"
      icon_name <- if (is_real_data) "check-circle" else "exclamation-triangle"
 
-     tags$div(
+     div(
        class = paste("alert", badge_class, "mb-3"),
        role = "alert",
        tags$strong(icon(icon_name), " Data Source: "),
@@ -223,7 +223,7 @@ server <- function(id, wbes_data) {
            tags$strong("Note: "),
            "Using simulated data for demonstration. ",
            "Download actual WBES data from ",
-           tags$a(
+           a(
              href = "https://www.enterprisesurveys.org/en/survey-datasets",
              target = "_blank",
              "enterprisesurveys.org"
