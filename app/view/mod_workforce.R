@@ -211,7 +211,9 @@ server <- function(id, wbes_data) {
     # KPIs
     output$kpi_workforce <- renderUI({
       req(filtered())
-      val <- round(mean(filtered()$IC.FRM.WKFC.ZS, na.rm = TRUE), 1)
+      d <- filtered()
+      if (is.null(d) || !"IC.FRM.WKFC.ZS" %in% names(d)) return(NULL)
+      val <- round(mean(d$IC.FRM.WKFC.ZS, na.rm = TRUE), 1)
       div(class = "card bg-primary text-white h-100",
         div(class = "card-body text-center",
           h2(paste0(val, "%")),
@@ -437,6 +439,8 @@ server <- function(id, wbes_data) {
     output$insights <- renderUI({
       req(filtered())
       d <- filtered()
+
+      if (is.null(d) || !"IC.FRM.WKFC.ZS" %in% names(d) || !"IC.FRM.FEMW.ZS" %in% names(d) || !"IC.FRM.FEMO.ZS" %in% names(d)) return(NULL)
 
       avg_workforce <- round(mean(d$IC.FRM.WKFC.ZS, na.rm = TRUE), 1)
       avg_female_workers <- round(mean(d$IC.FRM.FEMW.ZS, na.rm = TRUE), 1)

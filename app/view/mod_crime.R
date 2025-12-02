@@ -210,7 +210,9 @@ server <- function(id, wbes_data) {
     # KPIs
     output$kpi_crime <- renderUI({
       req(filtered())
-      val <- round(mean(filtered()$IC.FRM.CRIM.ZS, na.rm = TRUE), 1)
+      d <- filtered()
+      if (is.null(d) || !"IC.FRM.CRIM.ZS" %in% names(d)) return(NULL)
+      val <- round(mean(d$IC.FRM.CRIM.ZS, na.rm = TRUE), 1)
       div(class = "card bg-danger text-white h-100",
         div(class = "card-body text-center",
           h2(paste0(val, "%")),
@@ -219,7 +221,9 @@ server <- function(id, wbes_data) {
 
     output$kpi_security_cost <- renderUI({
       req(filtered())
-      val <- round(mean(filtered()$IC.FRM.SECU.ZS, na.rm = TRUE), 2)
+      d <- filtered()
+      if (is.null(d) || !"IC.FRM.SECU.ZS" %in% names(d)) return(NULL)
+      val <- round(mean(d$IC.FRM.SECU.ZS, na.rm = TRUE), 2)
       div(class = "card bg-warning text-dark h-100",
         div(class = "card-body text-center",
           h2(paste0(val, "%")),
@@ -311,6 +315,8 @@ server <- function(id, wbes_data) {
     output$cost_analysis <- renderPlotly({
       req(filtered())
       d <- filtered()
+
+      if (is.null(d) || !"IC.FRM.SECU.ZS" %in% names(d)) return(NULL)
 
       d <- d |>
         arrange(desc(IC.FRM.SECU.ZS)) |>
@@ -449,6 +455,8 @@ server <- function(id, wbes_data) {
     output$insights <- renderUI({
       req(filtered())
       d <- filtered()
+
+      if (is.null(d) || !"IC.FRM.CRIM.ZS" %in% names(d) || !"IC.FRM.SECU.ZS" %in% names(d)) return(NULL)
 
       avg_crime <- round(mean(d$IC.FRM.CRIM.ZS, na.rm = TRUE), 1)
       avg_security_cost <- round(mean(d$IC.FRM.SECU.ZS, na.rm = TRUE), 2)

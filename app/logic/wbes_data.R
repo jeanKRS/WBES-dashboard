@@ -215,8 +215,8 @@ load_microdata <- function(dta_files) {
   # Process and structure the data
   processed <- process_microdata(combined)
 
-  # Extract metadata
-  countries <- extract_countries_from_microdata(combined)
+  # Extract metadata (use processed data to get cleaned country names without year suffixes)
+  countries <- extract_countries_from_microdata(processed)
   log_info(sprintf("Extracted %d countries: %s...", length(countries), paste(head(countries, 5), collapse = ", ")))
   years <- extract_years_from_microdata(combined)
   log_info(sprintf("Extracted %d years: %s", length(years), paste(years, collapse = ", ")))
@@ -241,7 +241,7 @@ load_microdata <- function(dta_files) {
     "IC.FRM.CORR.ZS", "IC.FRM.BRIB.ZS", "IC.FRM.CAPU.ZS", "IC.FRM.OUTG.ZS",
     "IC.FRM.FINA.ZS", "IC.FRM.BANK.ZS", "IC.FRM.CRED.ZS", "IC.FRM.FEMO.ZS",
     "IC.FRM.FEMW.ZS", "IC.FRM.EXPRT.ZS", "IC.FRM.ELEC.ZS", "IC.FRM.INFRA.ZS",
-    "IC.FRM.CRIM.ZS", "IC.FRM.WKFC.ZS"
+    "IC.FRM.CRIM.ZS", "IC.FRM.SECU.ZS", "IC.FRM.WKFC.ZS"
   )
 
   # Filter for valid columns that exist in the data
@@ -450,6 +450,7 @@ process_microdata <- function(data) {
       IC.FRM.ELEC.ZS = coalesce_num(get0("elec", ifnotfound = NULL)),    # Electricity obstacle
       IC.FRM.INFRA.ZS = coalesce_num(get0("infra", ifnotfound = NULL)),  # Infrastructure obstacle
       IC.FRM.CRIM.ZS = crime_obstacle_pct,           # Crime as obstacle (from crime8)
+      IC.FRM.SECU.ZS = security_costs_pct,           # Security costs as % of sales (from crime2)
       IC.FRM.WKFC.ZS = workforce_obstacle_pct        # Workforce quality as obstacle (from l3)
     ) |>
     mutate(region = ifelse(region == "Aggregates", NA_character_, region))
