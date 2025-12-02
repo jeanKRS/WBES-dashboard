@@ -48,7 +48,7 @@ load_wbes_data <- function(data_path = here("data"), use_cache = TRUE, cache_hou
   }
 
   # Check for assets.zip (combined microdata) - PREFERRED METHOD
-  assets_zip <- file.path(data_path, "assets.zip")
+  assets_zip <- here(data_path, "assets.zip")
   if (file.exists(assets_zip)) {
     log_info("Found assets.zip - loading combined microdata")
     result <- load_from_zip(assets_zip, data_path)
@@ -126,7 +126,7 @@ load_from_zip <- function(zip_file, data_path) {
   log_info(paste("Extracting microdata from:", basename(zip_file)))
 
   # Create temp extraction directory
-  extract_dir <- file.path(data_path, ".extracted")
+  extract_dir <- here(data_path, ".extracted")
   dir.create(extract_dir, showWarnings = FALSE, recursive = TRUE)
 
   tryCatch({

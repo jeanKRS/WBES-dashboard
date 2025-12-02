@@ -8,7 +8,7 @@
 # WBES Data files (keep these local, don't commit to git)
 data/*.dta
 data/*.csv
-data/assets.zip
+# data/assets.zip
 data/*.rds
 data/.extracted/
 
