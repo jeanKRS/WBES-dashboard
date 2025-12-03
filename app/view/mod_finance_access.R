@@ -542,26 +542,64 @@ server <- function(id, wbes_data) {
     # Collateral chart
     output$collateral_chart <- renderPlotly({
       req(filtered_data())
-      data <- filtered_data()
-      data <- arrange(data, desc(collateral_required_pct))[1:10, ]
-      data$country <- factor(data$country, levels = rev(data$country))
-      
-      plot_ly(data,
-              y = ~country,
-              x = ~collateral_required_pct,
-              type = "bar",
-              orientation = "h",
-              marker = list(
-                color = ~collateral_required_pct,
-                colorscale = list(c(0, "#2E7D32"), c(0.5, "#F4A460"), c(1, "#dc3545"))
-              )) |>
-        layout(
-          xaxis = list(title = "Collateral (% of Loan Value)"),
-          yaxis = list(title = ""),
-          margin = list(l = 100),
-          paper_bgcolor = "rgba(0,0,0,0)"
-        ) |>
-        config(displayModeBar = FALSE)
+      firm_data <- filtered_data()
+
+      # Aggregate by country first to avoid duplicate factor levels
+      if (!is.null(firm_data) && nrow(firm_data) > 0 &&
+          "country" %in% names(firm_data) &&
+          "collateral_required_pct" %in% names(firm_data)) {
+
+        data <- firm_data |>
+          filter(!is.na(country) & !is.na(collateral_required_pct)) |>
+          group_by(country) |>
+          summarise(
+            collateral_required_pct = mean(collateral_required_pct, na.rm = TRUE),
+            .groups = "drop"
+          ) |>
+          arrange(desc(collateral_required_pct)) |>
+          head(10)
+
+        if (nrow(data) > 0) {
+          data$country <- factor(data$country, levels = rev(data$country))
+
+          plot_ly(data,
+                  y = ~country,
+                  x = ~collateral_required_pct,
+                  type = "bar",
+                  orientation = "h",
+                  marker = list(
+                    color = ~collateral_required_pct,
+                    colorscale = list(c(0, "#2E7D32"), c(0.5, "#F4A460"), c(1, "#dc3545"))
+                  )) |>
+            layout(
+              xaxis = list(title = "Collateral (% of Loan Value)"),
+              yaxis = list(title = ""),
+              margin = list(l = 100),
+              paper_bgcolor = "rgba(0,0,0,0)"
+            ) |>
+            config(displayModeBar = FALSE)
+        } else {
+          plot_ly() |>
+            layout(
+              annotations = list(
+                text = "No collateral data available",
+                xref = "paper", yref = "paper",
+                x = 0.5, y = 0.5, showarrow = FALSE
+              ),
+              paper_bgcolor = "rgba(0,0,0,0)"
+            )
+        }
+      } else {
+        plot_ly() |>
+          layout(
+            annotations = list(
+              text = "No collateral data available",
+              xref = "paper", yref = "paper",
+              x = 0.5, y = 0.5, showarrow = FALSE
+            ),
+            paper_bgcolor = "rgba(0,0,0,0)"
+          )
+      }
     })
     
     # Processing time - uses actual WBES data from fin22 (days to get loan)
