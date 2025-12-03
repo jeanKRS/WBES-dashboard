@@ -81,19 +81,7 @@ ui <- function(id) {
     # Analysis Charts
     fluidRow(
       class = "mb-4",
-      column(6,
-        card(
-          card_header(icon("coins"), " Security Cost Analysis"),
-          card_body(
-            plotlyOutput(ns("cost_analysis"), height = "350px"),
-            p(
-              class = "text-muted small mt-2",
-              "Bars translate security spending into percentage of sales, indicating the financial burden of crime mitigation."
-            )
-          )
-        )
-      ),
-      column(6,
+      column(12,
         card(
           card_header(icon("project-diagram"), " Crime vs. Business Performance"),
           card_body(
@@ -307,34 +295,6 @@ server <- function(id, wbes_data) {
           xaxis = list(title = "Security Risk Index"),
           yaxis = list(title = ""),
           margin = list(l = 150),
-          paper_bgcolor = "rgba(0,0,0,0)",
-          plot_bgcolor = "rgba(0,0,0,0)"
-        ) |>
-        config(displayModeBar = FALSE)
-    })
-
-    # Cost analysis
-    output$cost_analysis <- renderPlotly({
-      req(filtered())
-      d <- filtered()
-
-      if (is.null(d) || !"IC.FRM.SECU.ZS" %in% names(d)) return(NULL)
-
-      d <- d |>
-        arrange(desc(IC.FRM.SECU.ZS)) |>
-        head(15)
-
-      d$country <- factor(d$country, levels = rev(d$country))
-
-      plot_ly(d, y = ~country, x = ~IC.FRM.SECU.ZS, type = "bar",
-              orientation = "h",
-              marker = list(color = "#F49B7A"),
-              text = ~paste0(country, ": ", round(IC.FRM.SECU.ZS, 2), "% of sales"),
-              hoverinfo = "text") |>
-        layout(
-          xaxis = list(title = "Security Costs (% of Sales)"),
-          yaxis = list(title = ""),
-          margin = list(l = 120),
           paper_bgcolor = "rgba(0,0,0,0)",
           plot_bgcolor = "rgba(0,0,0,0)"
         ) |>

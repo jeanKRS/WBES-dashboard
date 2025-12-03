@@ -182,18 +182,33 @@ server <- function(id, wbes_data) {
       req(filtered())
       d <- filtered()
 
-      plot_ly(d, x = ~IC.FRM.OUTG.ZS, y = ~IC.FRM.CAPU.ZS,
-              type = "scatter", mode = "markers",
-              text = ~country,
-              marker = list(size = 12, color = ~IC.FRM.OUTG.ZS,
-                           colorscale = list(c(0, "#2E7D32"), c(1, "#dc3545")),
-                           opacity = 0.7)) |>
-        layout(
-          xaxis = list(title = "Power Outages (%)"),
-          yaxis = list(title = "Capacity Utilization (%)"),
-          paper_bgcolor = "rgba(0,0,0,0)"
-        ) |>
-        config(displayModeBar = FALSE)
+      # Filter out rows with NA in x or y to avoid Tibble size mismatch
+      d <- d |> filter(!is.na(IC.FRM.OUTG.ZS) & !is.na(IC.FRM.CAPU.ZS))
+
+      if (nrow(d) > 0) {
+        plot_ly(d, x = ~IC.FRM.OUTG.ZS, y = ~IC.FRM.CAPU.ZS,
+                type = "scatter", mode = "markers",
+                text = ~country,
+                marker = list(size = 12, color = ~IC.FRM.OUTG.ZS,
+                             colorscale = list(c(0, "#2E7D32"), c(1, "#dc3545")),
+                             opacity = 0.7)) |>
+          layout(
+            xaxis = list(title = "Power Outages (%)"),
+            yaxis = list(title = "Capacity Utilization (%)"),
+            paper_bgcolor = "rgba(0,0,0,0)"
+          ) |>
+          config(displayModeBar = FALSE)
+      } else {
+        plot_ly() |>
+          layout(
+            annotations = list(
+              text = "No data available for scatter plot",
+              xref = "paper", yref = "paper",
+              x = 0.5, y = 0.5, showarrow = FALSE
+            ),
+            paper_bgcolor = "rgba(0,0,0,0)"
+          )
+      }
     })
 
     # Heatmap
