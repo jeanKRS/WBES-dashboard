@@ -430,28 +430,29 @@ process_microdata <- function(data) {
       export_share_pct = compute_export_share(data),
       annual_sales_growth_pct = coalesce_num(get0("perf1", ifnotfound = NULL), get0("d2", ifnotfound = NULL)),
 
-      # Crime and security
+      # Crime and security (ensure these always exist even if source columns are missing)
       crime_obstacle_pct = coalesce_num(get0("crime8", ifnotfound = NULL)),
       security_costs_pct = coalesce_num(get0("crime2", ifnotfound = NULL))
     ) |>
     mutate(
       # Add IC.FRM.* aliases for compatibility with downstream modules
       # These World Bank indicator codes map to WBES microdata variables
-      IC.FRM.CORR.ZS = corruption_obstacle_pct,     # Corruption as obstacle
-      IC.FRM.BRIB.ZS = bribery_incidence_pct,        # Bribery incidence
-      IC.FRM.CAPU.ZS = capacity_utilization_pct,     # Capacity utilization
-      IC.FRM.OUTG.ZS = power_outages_per_month,      # Power outages
-      IC.FRM.FINA.ZS = coalesce_num(get0("fin14", ifnotfound = NULL)),  # Finance obstacle
-      IC.FRM.BANK.ZS = firms_with_bank_account_pct,  # Bank account access
-      IC.FRM.CRED.ZS = loan_rejection_rate_pct,      # Credit constraints
-      IC.FRM.FEMO.ZS = female_ownership_pct,         # Female ownership
-      IC.FRM.FEMW.ZS = female_workers_pct,           # Female workforce
-      IC.FRM.EXPRT.ZS = export_firms_pct,            # Export orientation
-      IC.FRM.ELEC.ZS = coalesce_num(get0("elec", ifnotfound = NULL)),    # Electricity obstacle
-      IC.FRM.INFRA.ZS = coalesce_num(get0("infra", ifnotfound = NULL)),  # Infrastructure obstacle
-      IC.FRM.CRIM.ZS = crime_obstacle_pct,           # Crime as obstacle (from crime8)
-      IC.FRM.SECU.ZS = security_costs_pct,           # Security costs as % of sales (from crime2)
-      IC.FRM.WKFC.ZS = workforce_obstacle_pct        # Workforce quality as obstacle (from wk10)
+      # Using coalesce to ensure columns always exist, defaulting to NA_real_ if source is NULL
+      IC.FRM.CORR.ZS = coalesce(corruption_obstacle_pct, NA_real_),     # Corruption as obstacle
+      IC.FRM.BRIB.ZS = coalesce(bribery_incidence_pct, NA_real_),        # Bribery incidence
+      IC.FRM.CAPU.ZS = coalesce(capacity_utilization_pct, NA_real_),     # Capacity utilization
+      IC.FRM.OUTG.ZS = coalesce(power_outages_per_month, NA_real_),      # Power outages
+      IC.FRM.FINA.ZS = coalesce_num(get0("fin14", ifnotfound = NULL), NA_real_),  # Finance obstacle
+      IC.FRM.BANK.ZS = coalesce(firms_with_bank_account_pct, NA_real_),  # Bank account access
+      IC.FRM.CRED.ZS = coalesce(loan_rejection_rate_pct, NA_real_),      # Credit constraints
+      IC.FRM.FEMO.ZS = coalesce(female_ownership_pct, NA_real_),         # Female ownership
+      IC.FRM.FEMW.ZS = coalesce(female_workers_pct, NA_real_),           # Female workforce
+      IC.FRM.EXPRT.ZS = coalesce(export_firms_pct, NA_real_),            # Export orientation
+      IC.FRM.ELEC.ZS = coalesce_num(get0("elec", ifnotfound = NULL), NA_real_),    # Electricity obstacle
+      IC.FRM.INFRA.ZS = coalesce_num(get0("infra", ifnotfound = NULL), NA_real_),  # Infrastructure obstacle
+      IC.FRM.CRIM.ZS = coalesce(crime_obstacle_pct, NA_real_),           # Crime as obstacle (from crime8)
+      IC.FRM.SECU.ZS = coalesce(security_costs_pct, NA_real_),           # Security costs as % of sales (from crime2)
+      IC.FRM.WKFC.ZS = coalesce(workforce_obstacle_pct, NA_real_)        # Workforce quality as obstacle (from wk10)
     ) |>
     mutate(region = ifelse(region == "Aggregates", NA_character_, region))
 
