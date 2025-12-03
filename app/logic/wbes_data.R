@@ -237,6 +237,13 @@ load_microdata <- function(dta_files) {
     "capacity_utilization_pct", "export_share_pct", "export_firms_pct",
     "female_ownership_pct", "female_workers_pct", "crime_obstacle_pct", "security_costs_pct",
     "workforce_obstacle_pct", "annual_sales_growth_pct",
+    # Infrastructure obstacle columns for Country Profile detailed charts
+    "electricity_obstacle", "water_obstacle", "transport_obstacle", "generator_share_pct",
+    # Financial access columns for Country Profile detailed charts
+    "loan_application_pct", "overdraft_facility_pct",
+    # Bribery columns for Country Profile governance charts
+    "bribe_for_permit", "bribe_for_import", "bribe_for_utilities", "bribe_for_tax", "bribe_for_contract",
+    "mgmt_time_regulations_pct",
     # Add IC.FRM.* aliases (only those that exist)
     "IC.FRM.CORR.ZS", "IC.FRM.BRIB.ZS", "IC.FRM.CAPU.ZS", "IC.FRM.OUTG.ZS",
     "IC.FRM.FINA.ZS", "IC.FRM.BANK.ZS", "IC.FRM.CRED.ZS", "IC.FRM.FEMO.ZS",
