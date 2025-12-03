@@ -244,6 +244,9 @@ load_microdata <- function(dta_files) {
     # Bribery columns for Country Profile governance charts
     "bribe_for_permit", "bribe_for_import", "bribe_for_utilities", "bribe_for_tax", "bribe_for_contract",
     "mgmt_time_regulations_pct",
+    # Loan application reason columns for Finance Access charts
+    "no_need_for_loan", "loan_procedures_complex", "loan_interest_high", "insufficient_collateral", "loan_size_inadequate",
+    "days_to_get_loan",
     # Add IC.FRM.* aliases (only those that exist)
     "IC.FRM.CORR.ZS", "IC.FRM.BRIB.ZS", "IC.FRM.CAPU.ZS", "IC.FRM.OUTG.ZS",
     "IC.FRM.FINA.ZS", "IC.FRM.BANK.ZS", "IC.FRM.CRED.ZS", "IC.FRM.FEMO.ZS",
@@ -261,7 +264,7 @@ load_microdata <- function(dta_files) {
     summarise(
       across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
       region = first_non_na(region),
-      income = first_non_na(income),
+      firm_size = first_non_na(firm_size),
       sector = first_non_na(sector),
       sample_size = n(),
       .groups = "drop"
@@ -275,7 +278,7 @@ load_microdata <- function(dta_files) {
     summarise(
       across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
       region = first_non_na(region),
-      income = first_non_na(income),
+      firm_size = first_non_na(firm_size),
       sample_size = n(),
       .groups = "drop"
     )
