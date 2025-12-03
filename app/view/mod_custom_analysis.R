@@ -218,10 +218,13 @@ server <- function(id, wbes_data) {
     observeEvent(wbes_data(), {
       req(wbes_data())
       d <- wbes_data()$latest
-
-      countries <- c("All" = "all", setNames(unique(d$country), unique(d$country)))
-      regions <- c("All" = "all", setNames(unique(d$region), unique(d$region)))
-      incomes <- c("All" = "all", setNames(unique(d$income), unique(d$income)))
+      # Filter out NA values before creating dropdown choices
+      countries_vec <- unique(d$country) |> stats::na.omit() |> as.character() |> sort()
+      regions_vec <- unique(d$region) |> stats::na.omit() |> as.character() |> sort()
+      incomes_vec <- unique(d$income) |> stats::na.omit() |> as.character() |> sort()
+      countries <- c("All" = "all", setNames(countries_vec, countries_vec))
+      regions <- c("All" = "all", setNames(regions_vec, regions_vec))
+      incomes <- c("All" = "all", setNames(incomes_vec, incomes_vec))
 
       shiny::updateSelectInput(session, "countries", choices = countries)
       shiny::updateSelectInput(session, "regions", choices = regions)
@@ -233,15 +236,15 @@ server <- function(id, wbes_data) {
       req(wbes_data())
       d <- wbes_data()$latest
 
-      # Apply filters
+      # Apply filters with NA handling
       if (!("all" %in% input$countries) && length(input$countries) > 0) {
-        d <- filter(d, country %in% input$countries)
+        d <- d |> filter(!is.na(country) & country %in% input$countries)
       }
       if (!("all" %in% input$regions) && length(input$regions) > 0) {
-        d <- filter(d, region %in% input$regions)
+        d <- d |> filter(!is.na(region) & region %in% input$regions)
       }
       if (!("all" %in% input$incomes) && length(input$incomes) > 0) {
-        d <- filter(d, income %in% input$incomes)
+        d <- d |> filter(!is.na(income) & income %in% input$incomes)
       }
 
       d
