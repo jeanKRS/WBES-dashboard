@@ -3,14 +3,10 @@
 
 box::use(
   shiny[reactiveVal, observeEvent, req, showModal, modalDialog, textInput,
-<<<<<<< HEAD
+
         selectizeInput, actionButton, modalButton, removeModal, icon, tags],
   dplyr[filter],
   stats[setNames]
-=======
-        selectizeInput, actionButton, modalButton, removeModal, icon, tags, renderUI, uiOutput, HTML],
-  dplyr[filter]
->>>>>>> festive-bhabha
 )
 
 #' @export
