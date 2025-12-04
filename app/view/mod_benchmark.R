@@ -175,20 +175,21 @@ server <- function(id, wbes_data) {
 
     # Comparison data
     comparison_data <- reactive({
-      req(wbes_data(), input$countries_compare)
+      req(wbes_data(), input$countries_compare, input$sort_order)
       data <- wbes_data()$latest
       data <- filter(data, country %in% input$countries_compare)
 
-      if (is.null(data) || !input$indicator_select %in% names(data)) return(NULL)
-
-      if (input$sort_order == "desc") {
-        data <- arrange(data, desc(.data[[input$indicator_select]]))
-      } else {
-        data <- arrange(data, .data[[input$indicator_select]])
+      # Don't return NULL - let the chart handle missing indicators
+      if (!is.null(data) && input$indicator_select %in% names(data)) {
+        if (input$sort_order == "desc") {
+          data <- arrange(data, desc(.data[[input$indicator_select]]))
+        } else {
+          data <- arrange(data, .data[[input$indicator_select]])
+        }
       }
 
       data
-    }) |> shiny::bindEvent(input$compare_btn, ignoreNULL = FALSE)
+    }) |> shiny::bindEvent(input$compare_btn, input$sort_order, ignoreNULL = FALSE)
 
     # Main comparison bar chart
     output$comparison_bar <- renderPlotly({
@@ -196,34 +197,56 @@ server <- function(id, wbes_data) {
       data <- comparison_data()
       indicator <- input$indicator_select
 
-      # Color by region
-      colors <- c(
-        "Sub-Saharan Africa" = "#1B6B5F",
-        "South Asia" = "#F49B7A",
-        "East Asia & Pacific" = "#2E7D32",
-        "Latin America & Caribbean" = "#17a2b8",
-        "Europe & Central Asia" = "#6C757D"
-      )
+      # Check if indicator exists in data
+      if (!indicator %in% names(data) || nrow(data) == 0) {
+        plot_ly() |>
+          layout(
+            xaxis = list(visible = FALSE),
+            yaxis = list(visible = FALSE),
+            annotations = list(
+              list(
+                text = if (!indicator %in% names(data)) {
+                  paste0("Missing data: ", indicator, " column not found in dataset")
+                } else {
+                  "No data available for selected countries"
+                },
+                showarrow = FALSE,
+                font = list(size = 14, color = "#666666")
+              )
+            ),
+            paper_bgcolor = "rgba(0,0,0,0)"
+          ) |>
+          config(displayModeBar = FALSE)
+      } else {
+        # Color by region
+        colors <- c(
+          "Sub-Saharan Africa" = "#1B6B5F",
+          "South Asia" = "#F49B7A",
+          "East Asia & Pacific" = "#2E7D32",
+          "Latin America & Caribbean" = "#17a2b8",
+          "Europe & Central Asia" = "#6C757D"
+        )
 
-      data$color <- colors[data$region]
-      data$country <- factor(data$country, levels = data$country)
+        data$color <- colors[data$region]
+        data$country <- factor(data$country, levels = data$country)
 
-      plot_ly(data,
-              x = ~country,
-              y = ~get(indicator),
-              type = "bar",
-              color = ~region,
-              colors = colors,
-              hovertemplate = "%{x}<br>%{y:.1f}<extra>%{fullData.name}</extra>") |>
-        layout(
-          xaxis = list(title = "", tickangle = -45),
-          yaxis = list(title = gsub("_", " ", tools::toTitleCase(indicator))),
-          legend = list(orientation = "h", y = -0.25),
-          margin = list(b = 120),
-          paper_bgcolor = "rgba(0,0,0,0)",
-          plot_bgcolor = "rgba(0,0,0,0)"
-        ) |>
-        config(displayModeBar = FALSE)
+        plot_ly(data,
+                x = ~country,
+                y = ~get(indicator),
+                type = "bar",
+                color = ~region,
+                colors = colors,
+                hovertemplate = "%{x}<br>%{y:.1f}<extra>%{fullData.name}</extra>") |>
+          layout(
+            xaxis = list(title = "", tickangle = -45),
+            yaxis = list(title = gsub("_", " ", tools::toTitleCase(indicator))),
+            legend = list(orientation = "h", y = -0.25),
+            margin = list(b = 120),
+            paper_bgcolor = "rgba(0,0,0,0)",
+            plot_bgcolor = "rgba(0,0,0,0)"
+          ) |>
+          config(displayModeBar = FALSE)
+      }
     })
 
     # Regional distribution pie
