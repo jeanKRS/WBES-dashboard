@@ -284,6 +284,48 @@ load_microdata <- function(dta_files) {
     )
   log_info(sprintf("Country panel created: %d country-year observations", nrow(country_panel)))
 
+  # Create country-sector aggregates for sector profile
+  log_info("Creating country-sector aggregates...")
+  country_sector_aggregates <- processed |>
+    filter(!is.na(country) & !is.na(country_code) & !is.na(sector)) |>
+    group_by(country, country_code, sector) |>
+    summarise(
+      across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
+      region = first_non_na(region),
+      firm_size = first_non_na(firm_size),
+      sample_size = n(),
+      .groups = "drop"
+    )
+  log_info(sprintf("Country-sector aggregates created: %d country-sector combinations", nrow(country_sector_aggregates)))
+
+  # Create country-size aggregates for size profile
+  log_info("Creating country-size aggregates...")
+  country_size_aggregates <- processed |>
+    filter(!is.na(country) & !is.na(country_code) & !is.na(firm_size)) |>
+    group_by(country, country_code, firm_size) |>
+    summarise(
+      across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
+      region = first_non_na(region),
+      sector = first_non_na(sector),
+      sample_size = n(),
+      .groups = "drop"
+    )
+  log_info(sprintf("Country-size aggregates created: %d country-size combinations", nrow(country_size_aggregates)))
+
+  # Create country-region aggregates for regional profile
+  log_info("Creating country-region aggregates...")
+  country_region_aggregates <- processed |>
+    filter(!is.na(country) & !is.na(country_code) & !is.na(region)) |>
+    group_by(country, country_code, region) |>
+    summarise(
+      across(all_of(available_metric_cols), ~mean(.x, na.rm = TRUE), .names = "{.col}"),
+      firm_size = first_non_na(firm_size),
+      sector = first_non_na(sector),
+      sample_size = n(),
+      .groups = "drop"
+    )
+  log_info(sprintf("Country-region aggregates created: %d country-region combinations", nrow(country_region_aggregates)))
+
   # Get country coordinates and merge with aggregates
   country_coords <- get_country_coordinates()
   country_aggregates_with_coords <- merge(
@@ -327,6 +369,9 @@ load_microdata <- function(dta_files) {
     processed = processed,
     latest = country_aggregates_with_coords,  # Country-level aggregates for maps/charts with coordinates
     country_panel = country_panel,  # Time series data by country and year
+    country_sector = country_sector_aggregates,  # Country-sector aggregates for sector profiles
+    country_size = country_size_aggregates,  # Country-size aggregates for size profiles
+    country_region = country_region_aggregates,  # Country-region aggregates for regional profiles
     countries = countries,
     country_codes = processed$country_code |> unique() |> na.omit() |> as.character(),
     years = years,

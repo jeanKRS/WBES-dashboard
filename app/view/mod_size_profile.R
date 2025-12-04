@@ -197,7 +197,7 @@ server <- function(id, wbes_data) {
     # Selected size data
     size_data <- reactive({
       req(wbes_data(), input$size_select)
-      data <- wbes_data()$latest
+      data <- wbes_data()$country_size
       data |> filter(!is.na(firm_size) & firm_size == input$size_select)
     })
 

@@ -190,7 +190,7 @@ server <- function(id, wbes_data) {
     # Selected sector data
     sector_data <- reactive({
       req(wbes_data(), input$sector_select)
-      data <- wbes_data()$latest
+      data <- wbes_data()$country_sector
       data |> filter(!is.na(sector) & sector == input$sector_select)
     })
 
