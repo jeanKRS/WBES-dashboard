@@ -4,7 +4,7 @@
 
 box::use(
   shiny[bootstrapPage, moduleServer, NS, tags, icon, HTML, selectInput,
-        updateSelectInput, observeEvent, reactive, req, div, fluidRow, column,
+        updateSelectInput, updateSelectizeInput, observeEvent, reactive, req, div, fluidRow, column,
         actionButton, selectizeInput, sliderInput],
   bslib[
     bs_theme, bs_add_rules, nav_panel, nav_spacer, nav_menu,
