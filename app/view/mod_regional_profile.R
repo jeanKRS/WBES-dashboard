@@ -190,7 +190,7 @@ server <- function(id, wbes_data) {
     # Selected region data
     region_data <- reactive({
       req(wbes_data(), input$region_select)
-      data <- wbes_data()$latest
+      data <- wbes_data()$country_region
       data |> filter(!is.na(region) & region == input$region_select)
     })
 
