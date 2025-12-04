@@ -30,22 +30,10 @@ ui <- function(id) {
       )
     ),
 
-    # Sector Selector
+    # Sector Summary (no duplicate selector - use sidebar filter)
     fluidRow(
       class = "mb-4",
-      column(4,
-        card(
-          card_body(
-            selectInput(
-              ns("sector_select"),
-              "Select Sector",
-              choices = NULL,
-              width = "100%"
-            )
-          )
-        )
-      ),
-      column(8,
+      column(12,
         uiOutput(ns("sector_summary"))
       )
     ),
@@ -200,29 +188,46 @@ server <- function(id, wbes_data, global_filters = NULL) {
       data
     })
 
-    # Update sector choices
-    observeEvent(wbes_data(), {
+    # Get selected sector from global filters
+    selected_sector <- reactive({
+      if (!is.null(global_filters)) {
+        filters <- global_filters()
+        if (!is.null(filters$sector) && filters$sector != "all") {
+          return(filters$sector)
+        }
+      }
+      # Default to first sector if "all" is selected
       req(wbes_data())
       sectors <- wbes_data()$sectors
-
-      shiny::updateSelectInput(
-        session, "sector_select",
-        choices = setNames(sectors, sectors),
-        selected = if(length(sectors) > 0) sectors[1] else NULL
-      )
+      if (length(sectors) > 0) sectors[1] else NULL
     })
 
     # Selected sector data
     sector_data <- reactive({
-      req(filtered_data(), input$sector_select)
+      req(filtered_data(), selected_sector())
       data <- filtered_data()
-      data |> filter(!is.na(sector) & sector == input$sector_select)
+      sector_val <- selected_sector()
+
+      # If a specific sector is selected from sidebar, use it
+      if (!is.null(sector_val) && sector_val != "all") {
+        data |> filter(!is.na(sector) & sector == sector_val)
+      } else {
+        # If "all" is selected, show first sector's data
+        req(wbes_data())
+        sectors <- wbes_data()$sectors
+        if (length(sectors) > 0) {
+          data |> filter(!is.na(sector) & sector == sectors[1])
+        } else {
+          data
+        }
+      }
     })
 
     # Sector summary card
     output$sector_summary <- renderUI({
-      req(sector_data())
+      req(sector_data(), selected_sector())
       d <- sector_data()
+      sector_name <- selected_sector()
 
       # Count countries and firms in this sector
       countries_count <- if (!is.null(d$country) && length(d$country) > 0) {
@@ -241,6 +246,10 @@ server <- function(id, wbes_data, global_filters = NULL) {
         class = "card h-100",
         tags$div(
           class = "card-body",
+          tags$h4(
+            class = "text-primary-teal mb-3",
+            icon("industry"), " ", sector_name
+          ),
           fluidRow(
             column(6,
               tags$div(class = "kpi-box",

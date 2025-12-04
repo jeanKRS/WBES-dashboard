@@ -82,13 +82,12 @@ ui <- function(request) {
       useWaiter(),
       tags$style(HTML("
         .bslib-sidebar-layout { --bslib-sidebar-width: 280px; }
-        .sidebar { background-color: #f8f9fa; border-right: 1px solid #dee2e6; }
+        .sidebar { background-color: #f8f9fa; border-right: 1px solid #dee2e6; overflow-y: auto; }
         .sidebar .card { margin-bottom: 1rem; background-color: white; }
         .sidebar h5 { color: #1B6B5F; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; }
         .sidebar .form-group { margin-bottom: 0.75rem; }
         .sidebar .form-label { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; }
         .sidebar .form-select { font-size: 0.85rem; padding: 0.375rem 0.75rem; }
-        #sidebar_filters { position: sticky; top: 10px; }
       "))
     ),
     sidebar = sidebar(

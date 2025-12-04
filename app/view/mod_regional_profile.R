@@ -30,22 +30,10 @@ ui <- function(id) {
       )
     ),
 
-    # Region Selector
+    # Region Summary (no duplicate selector - use sidebar filter)
     fluidRow(
       class = "mb-4",
-      column(4,
-        card(
-          card_body(
-            selectInput(
-              ns("region_select"),
-              "Select Region",
-              choices = NULL,
-              width = "100%"
-            )
-          )
-        )
-      ),
-      column(8,
+      column(12,
         uiOutput(ns("region_summary"))
       )
     ),
@@ -200,29 +188,46 @@ server <- function(id, wbes_data, global_filters = NULL) {
       data
     })
 
-    # Update region choices
-    observeEvent(wbes_data(), {
+    # Get selected region from global filters
+    selected_region <- reactive({
+      if (!is.null(global_filters)) {
+        filters <- global_filters()
+        if (!is.null(filters$region) && filters$region != "all") {
+          return(filters$region)
+        }
+      }
+      # Default to first region if "all" is selected
       req(wbes_data())
       regions <- wbes_data()$regions
-
-      shiny::updateSelectInput(
-        session, "region_select",
-        choices = setNames(regions, regions),
-        selected = if(length(regions) > 0) regions[1] else NULL
-      )
+      if (length(regions) > 0) regions[1] else NULL
     })
 
     # Selected region data
     region_data <- reactive({
-      req(filtered_data(), input$region_select)
+      req(filtered_data(), selected_region())
       data <- filtered_data()
-      data |> filter(!is.na(region) & region == input$region_select)
+      region_val <- selected_region()
+
+      # If a specific region is selected from sidebar, use it
+      if (!is.null(region_val) && region_val != "all") {
+        data |> filter(!is.na(region) & region == region_val)
+      } else {
+        # If "all" is selected, show first region's data
+        req(wbes_data())
+        regions <- wbes_data()$regions
+        if (length(regions) > 0) {
+          data |> filter(!is.na(region) & region == regions[1])
+        } else {
+          data
+        }
+      }
     })
 
     # Region summary card
     output$region_summary <- renderUI({
-      req(region_data())
+      req(region_data(), selected_region())
       d <- region_data()
+      region_name <- selected_region()
 
       # Count countries and firms in this region
       countries_count <- if (!is.null(d$country) && length(d$country) > 0) {
@@ -241,6 +246,10 @@ server <- function(id, wbes_data, global_filters = NULL) {
         class = "card h-100",
         tags$div(
           class = "card-body",
+          tags$h4(
+            class = "text-primary-teal mb-3",
+            icon("globe-africa"), " ", region_name
+          ),
           fluidRow(
             column(6,
               tags$div(class = "kpi-box",

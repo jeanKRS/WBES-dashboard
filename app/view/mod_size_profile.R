@@ -30,22 +30,10 @@ ui <- function(id) {
       )
     ),
 
-    # Size Selector
+    # Size Summary (no duplicate selector - use sidebar filter)
     fluidRow(
       class = "mb-4",
-      column(4,
-        card(
-          card_body(
-            selectInput(
-              ns("size_select"),
-              "Select Firm Size Category",
-              choices = NULL,
-              width = "100%"
-            )
-          )
-        )
-      ),
-      column(8,
+      column(12,
         uiOutput(ns("size_summary"))
       )
     ),
@@ -200,36 +188,56 @@ server <- function(id, wbes_data, global_filters = NULL) {
       data
     })
 
-    # Update size choices
-    observeEvent(wbes_data(), {
+    # Get selected size from global filters
+    selected_size <- reactive({
+      if (!is.null(global_filters)) {
+        filters <- global_filters()
+        if (!is.null(filters$firm_size) && filters$firm_size != "all") {
+          return(filters$firm_size)
+        }
+      }
+      # Default to first size if "all" is selected
       req(wbes_data())
       data <- wbes_data()$latest
-
-      # Get unique firm sizes
       sizes <- data$firm_size |>
         unique() |>
         stats::na.omit() |>
         as.character() |>
         sort()
-
-      shiny::updateSelectInput(
-        session, "size_select",
-        choices = setNames(sizes, sizes),
-        selected = if(length(sizes) > 0) sizes[1] else NULL
-      )
+      if (length(sizes) > 0) sizes[1] else NULL
     })
 
     # Selected size data
     size_data <- reactive({
-      req(filtered_data(), input$size_select)
+      req(filtered_data(), selected_size())
       data <- filtered_data()
-      data |> filter(!is.na(firm_size) & firm_size == input$size_select)
+      size_val <- selected_size()
+
+      # If a specific size is selected from sidebar, use it
+      if (!is.null(size_val) && size_val != "all") {
+        data |> filter(!is.na(firm_size) & firm_size == size_val)
+      } else {
+        # If "all" is selected, show first size's data
+        req(wbes_data())
+        data_ref <- wbes_data()$latest
+        sizes <- data_ref$firm_size |>
+          unique() |>
+          stats::na.omit() |>
+          as.character() |>
+          sort()
+        if (length(sizes) > 0) {
+          data |> filter(!is.na(firm_size) & firm_size == sizes[1])
+        } else {
+          data
+        }
+      }
     })
 
     # Size summary card
     output$size_summary <- renderUI({
-      req(size_data())
+      req(size_data(), selected_size())
       d <- size_data()
+      size_name <- selected_size()
 
       # Count countries and firms in this size category
       countries_count <- if (!is.null(d$country) && length(d$country) > 0) {
@@ -248,6 +256,10 @@ server <- function(id, wbes_data, global_filters = NULL) {
         class = "card h-100",
         tags$div(
           class = "card-body",
+          tags$h4(
+            class = "text-primary-teal mb-3",
+            icon("building"), " ", size_name, " Firms"
+          ),
           fluidRow(
             column(6,
               tags$div(class = "kpi-box",
