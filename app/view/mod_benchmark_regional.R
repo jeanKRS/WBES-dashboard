@@ -187,24 +187,57 @@ server <- function(id, wbes_data, global_filters = NULL) {
       data
     })
 
-    # Update region choices
-    observeEvent(wbes_data(), {
+    # Update region choices (including custom regions)
+    observeEvent(list(wbes_data(), global_filters()), {
       req(wbes_data())
-      regions <- wbes_data()$regions
+
+      # Get standard regions
+      standard_regions <- wbes_data()$regions
+
+      # Get custom regions if available
+      custom_regions <- if (!is.null(global_filters)) {
+        filters <- global_filters()
+        if (!is.null(filters$custom_regions)) filters$custom_regions else list()
+      } else {
+        list()
+      }
+
+      # Combine standard and custom regions
+      if (length(custom_regions) > 0) {
+        custom_region_names <- names(custom_regions)
+        all_regions <- c(
+          setNames(standard_regions, paste0("   ", standard_regions)),
+          setNames(
+            paste0("custom:", custom_region_names),
+            paste0("   [Custom] ", custom_region_names)
+          )
+        )
+      } else {
+        all_regions <- setNames(standard_regions, standard_regions)
+      }
+
       shiny::updateSelectizeInput(
         session, "regions_compare",
-        choices = setNames(regions, regions),
-        selected = regions[1:min(length(regions), length(regions))]
+        choices = all_regions,
+        selected = standard_regions[1:min(3, length(standard_regions))]
       )
-    })
+    }, ignoreNULL = FALSE)
 
     # Aggregate regional data
     region_aggregated <- reactive({
       req(filtered_data())
       data <- filtered_data()
 
-      # Aggregate by region
-      data |>
+      # Get custom regions
+      custom_regions <- if (!is.null(global_filters)) {
+        filters <- global_filters()
+        if (!is.null(filters$custom_regions)) filters$custom_regions else list()
+      } else {
+        list()
+      }
+
+      # Aggregate standard regions
+      standard_agg <- data |>
         filter(!is.na(region)) |>
         group_by(region) |>
         summarise(
@@ -219,6 +252,40 @@ server <- function(id, wbes_data, global_filters = NULL) {
           annual_sales_growth_pct = mean(annual_sales_growth_pct, na.rm = TRUE),
           .groups = "drop"
         )
+
+      # Aggregate custom regions if any exist
+      if (length(custom_regions) > 0) {
+        custom_agg_list <- lapply(names(custom_regions), function(region_name) {
+          custom_region <- custom_regions[[region_name]]
+          region_data <- data |> filter(country %in% custom_region$countries)
+
+          if (nrow(region_data) > 0) {
+            data.frame(
+              region = paste0("custom:", region_name),
+              countries_count = length(unique(region_data$country[!is.na(region_data$country)])),
+              firms_count = sum(region_data$sample_size, na.rm = TRUE),
+              power_outages_per_month = mean(region_data$power_outages_per_month, na.rm = TRUE),
+              firms_with_credit_line_pct = mean(region_data$firms_with_credit_line_pct, na.rm = TRUE),
+              bribery_incidence_pct = mean(region_data$bribery_incidence_pct, na.rm = TRUE),
+              capacity_utilization_pct = mean(region_data$capacity_utilization_pct, na.rm = TRUE),
+              female_ownership_pct = mean(region_data$female_ownership_pct, na.rm = TRUE),
+              export_firms_pct = mean(region_data$export_firms_pct, na.rm = TRUE),
+              annual_sales_growth_pct = mean(region_data$annual_sales_growth_pct, na.rm = TRUE)
+            )
+          } else {
+            NULL
+          }
+        })
+
+        # Combine custom aggregations
+        custom_agg <- do.call(rbind, Filter(Negate(is.null), custom_agg_list))
+
+        if (!is.null(custom_agg) && nrow(custom_agg) > 0) {
+          standard_agg <- rbind(standard_agg, custom_agg)
+        }
+      }
+
+      standard_agg
     })
 
     # Comparison data
