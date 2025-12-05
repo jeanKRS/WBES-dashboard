@@ -85,9 +85,35 @@ ui <- function(request) {
         .sidebar { background-color: #f8f9fa; border-right: 1px solid #dee2e6; overflow-y: auto; }
         .sidebar .card { margin-bottom: 1rem; background-color: white; }
         .sidebar h5 { color: #1B6B5F; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; }
-        .sidebar .form-group { margin-bottom: 0.75rem; }
+        .sidebar .form-group { margin-bottom: 0.75rem; position: relative; z-index: auto; }
         .sidebar .form-label { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; }
         .sidebar .form-select { font-size: 0.85rem; padding: 0.375rem 0.75rem; }
+
+        /* Ensure dropdowns don't conflict with each other */
+        .sidebar .selectize-dropdown {
+          z-index: 1050 !important;
+          max-height: 200px;
+        }
+        .sidebar .selectize-input {
+          position: relative;
+          z-index: 1;
+        }
+        .sidebar .selectize-control.single .selectize-input:after {
+          right: 15px;
+        }
+
+        /* Stagger z-index for multiple selects to prevent overlap */
+        #common_filters > div:nth-child(1) { z-index: 15; }
+        #common_filters > div:nth-child(2) { z-index: 14; }
+        #common_filters > div:nth-child(3) { z-index: 13; }
+        #common_filters > div:nth-child(4) { z-index: 12; }
+        #common_filters > div:nth-child(5) { z-index: 11; }
+
+        /* Ensure proper spacing and containment */
+        .sidebar .mb-3 {
+          position: relative;
+          clear: both;
+        }
       "))
     ),
     sidebar = sidebar(
@@ -98,70 +124,85 @@ ui <- function(request) {
         style = "padding: 0.5rem;",
         tags$h5(icon("filter"), " Filters", style = "margin-bottom: 1rem; color: #1B6B5F;"),
 
-        # Common Filters (always visible)
+        # Common Filters (always visible) - with better spacing
         tags$div(
           id = "common_filters",
+          style = "margin-bottom: 1rem;",
+
+          # Region filter with custom region buttons below
           tags$div(
-            class = "d-flex gap-2 mb-2",
-            tags$div(
-              class = "flex-grow-1",
-              selectInput(
-                "global_region_filter",
-                "Region",
-                choices = c("All Regions" = "all"),
-                selected = "all",
-                width = "100%"
-              )
+            class = "mb-3",
+            selectInput(
+              "global_region_filter",
+              "Region",
+              choices = c("All Regions" = "all"),
+              selected = "all",
+              width = "100%"
             ),
             tags$div(
-              class = "d-flex align-items-end pb-3 gap-1",
+              class = "d-flex gap-2 mt-2",
               actionButton(
                 "create_custom_region",
-                NULL,
+                "Create Region",
                 icon = icon("plus-circle"),
-                class = "btn-sm btn-outline-primary",
-                title = "Create Custom Region",
-                style = "height: 38px;"
+                class = "btn-sm btn-outline-primary flex-grow-1",
+                style = "font-size: 0.75rem;"
               ),
               actionButton(
                 "manage_custom_regions",
-                NULL,
+                "Manage",
                 icon = icon("cog"),
-                class = "btn-sm btn-outline-secondary",
-                title = "Manage Custom Regions",
-                style = "height: 38px;"
+                class = "btn-sm btn-outline-secondary flex-grow-1",
+                style = "font-size: 0.75rem;"
               )
             )
           ),
-          selectInput(
-            "global_sector_filter",
-            "Sector",
-            choices = c("All Sectors" = "all"),
-            selected = "all",
-            width = "100%"
+
+          # Other filters with consistent spacing
+          tags$div(
+            class = "mb-3",
+            selectInput(
+              "global_sector_filter",
+              "Sector",
+              choices = c("All Sectors" = "all"),
+              selected = "all",
+              width = "100%"
+            )
           ),
-          selectInput(
-            "global_firm_size_filter",
-            "Firm Size",
-            choices = c("All Sizes" = "all"),
-            selected = "all",
-            width = "100%"
+
+          tags$div(
+            class = "mb-3",
+            selectInput(
+              "global_firm_size_filter",
+              "Firm Size",
+              choices = c("All Sizes" = "all"),
+              selected = "all",
+              width = "100%"
+            )
           ),
-          selectInput(
-            "global_income_filter",
-            "Income Group",
-            choices = c("All Income Levels" = "all"),
-            selected = "all",
-            width = "100%"
+
+          tags$div(
+            class = "mb-3",
+            selectInput(
+              "global_income_filter",
+              "Income Group",
+              choices = c("All Income Levels" = "all"),
+              selected = "all",
+              width = "100%"
+            )
           ),
-          selectizeInput(
-            "global_year_filter",
-            "Survey Year",
-            choices = c("All Years" = "all"),
-            selected = "all",
-            multiple = TRUE,
-            options = list(plugins = list('remove_button')),
-            width = "100%"
+
+          tags$div(
+            class = "mb-3",
+            selectizeInput(
+              "global_year_filter",
+              "Survey Year",
+              choices = c("All Years" = "all"),
+              selected = "all",
+              multiple = TRUE,
+              options = list(plugins = list('remove_button')),
+              width = "100%"
+            )
           )
         ),
 
